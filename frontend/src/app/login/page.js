@@ -1,0 +1,128 @@
+"use client";
+import { useState } from "react";
+import Link from "next/link";
+
+export default function Login() {
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [message, setMessage] = useState("");
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage("");
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (res.ok && data.token) {
+        localStorage.setItem("token", data.token);
+        setMessage("Login successful!");
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1000);
+      } else {
+        setMessage(data.message || "Login failed");
+      }
+    } catch (error) {
+      setMessage("An error occurred. Please try again.");
+    }
+  };
+
+  const handleGoogleLogin = () => {
+    window.location.href = "http://localhost:5000/api/auth/google";
+  };
+
+  return (
+    <div className="max-w-md mx-auto mt-10 p-6 rounded-lg shadow-md transition-colors duration-300 card">
+      <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium">Email</label>
+          <input
+            name="email"
+            type="email"
+            placeholder="Enter your email"
+            value={form.email}
+            onChange={handleChange}
+            required
+            className="mt-1 block w-full rounded-md shadow-sm transition-colors duration-300 p-2"
+            style={{ 
+              backgroundColor: 'var(--card-bg)', 
+              color: 'var(--foreground)',
+              borderColor: 'var(--border-color)',
+              borderWidth: '1px',
+              borderStyle: 'solid'
+            }}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium">Password</label>
+          <input
+            name="password"
+            type="password"
+            placeholder="Enter your password"
+            value={form.password}
+            onChange={handleChange}
+            required
+            className="mt-1 block w-full rounded-md shadow-sm transition-colors duration-300 p-2"
+            style={{ 
+              backgroundColor: 'var(--card-bg)', 
+              color: 'var(--foreground)',
+              borderColor: 'var(--border-color)',
+              borderWidth: '1px',
+              borderStyle: 'solid'
+            }}
+          />
+        </div>
+        <button
+          type="submit"
+          className="w-full py-2 px-4 rounded-md transition-colors duration-300"
+          style={{ backgroundColor: 'var(--primary)', color: 'white' }}
+        >
+          Login
+        </button>
+      </form>
+      <div className="mt-4">
+        <button
+          onClick={handleGoogleLogin}
+          className="w-full py-2 px-4 rounded-md transition-colors duration-300 flex items-center justify-center"
+          style={{ 
+            backgroundColor: 'transparent', 
+            color: 'var(--foreground)',
+            borderColor: 'var(--border-color)',
+            borderWidth: '1px',
+            borderStyle: 'solid'
+          }}
+        >
+          <img
+            src="https://www.google.com/favicon.ico"
+            alt="Google"
+            className="w-5 h-5 mr-2"
+          />
+          Login with Google
+        </button>
+      </div>
+      {message && (
+        <p className={`mt-4 text-center ${message.includes("successful") ? "text-green-600" : "text-red-600"}`}>
+          {message}
+        </p>
+      )}
+      <p className="mt-4 text-center text-sm opacity-80">
+        Don't have an account?{" "}
+        <Link 
+          href="/register" 
+          className="transition-colors duration-300"
+          style={{ color: 'var(--primary)' }}
+        >
+          Register here
+        </Link>
+      </p>
+    </div>
+  );
+} 
