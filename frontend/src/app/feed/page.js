@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { FiHeart, FiMessageCircle, FiBookmark, FiClock, FiRefreshCw } from "react-icons/fi";
+import { FaHeart } from "react-icons/fa";
 import Link from "next/link";
 
 export default function Feed() {
@@ -9,6 +10,12 @@ export default function Feed() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [commentInputs, setCommentInputs] = useState({});
+  const [activeCommentPostId, setActiveCommentPostId] = useState(null);
+  const [postComments, setPostComments] = useState({});
+  const [loadingComments, setLoadingComments] = useState({});
+  const [commentErrors, setCommentErrors] = useState({});
+  const [likeErrors, setLikeErrors] = useState({});
 
   // Fetch the feed on component mount and every 30 seconds
   useEffect(() => {
@@ -36,7 +43,9 @@ export default function Feed() {
 
     try {
       const response = await fetch("http://localhost:5000/api/posts/feed", {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+          Authorization: `Bearer ${token}` 
+        }
       });
 
       if (!response.ok) {
@@ -44,8 +53,19 @@ export default function Feed() {
       }
 
       const data = await response.json();
-      setPosts(data.posts);
-      setLastRefresh(new Date());
+      
+      if (data.posts) {
+        // Ensure each post has the required fields
+        const processedPosts = data.posts.map(post => ({
+          ...post,
+          likesCount: post.likesCount || 0,
+          commentsCount: post.commentsCount || 0,
+          isLiked: post.isLiked || false
+        }));
+        
+        setPosts(processedPosts);
+        setLastRefresh(new Date());
+      }
     } catch (error) {
       console.error("Error fetching feed:", error);
       if (showLoading) {
@@ -54,6 +74,171 @@ export default function Feed() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+  };
+
+  const fetchComments = async (postId) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("You must be logged in to view comments");
+      return;
+    }
+
+    setLoadingComments(prev => ({ ...prev, [postId]: true }));
+    setCommentErrors(prev => ({ ...prev, [postId]: null }));
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/posts/${postId}`, {
+        headers: { 
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch comments");
+      }
+
+      const data = await response.json();
+      
+      if (data.post && data.post.comments) {
+        setPostComments(prev => ({ 
+          ...prev, 
+          [postId]: data.post.comments 
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      setCommentErrors(prev => ({ 
+        ...prev, 
+        [postId]: "Failed to load comments. Please try again." 
+      }));
+    } finally {
+      setLoadingComments(prev => ({ ...prev, [postId]: false }));
+    }
+  };
+
+  const handleLike = async (postId) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("You must be logged in to like posts");
+      return;
+    }
+
+    // Clear any previous errors
+    setLikeErrors(prev => ({ ...prev, [postId]: null }));
+
+    try {
+      // Make the API call first without optimistic update
+      const response = await fetch(`http://localhost:5000/api/posts/${postId}/like`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to like post");
+      }
+
+      // Update the posts state after successful API call
+      setPosts(prevPosts => 
+        prevPosts.map(post => {
+          if (post._id === postId) {
+            return {
+              ...post,
+              isLiked: data.isLiked,
+              likesCount: data.likesCount
+            };
+          }
+          return post;
+        })
+      );
+    } catch (error) {
+      console.error("Error liking post:", error);
+      setLikeErrors(prev => ({ 
+        ...prev, 
+        [postId]: error.message || "Failed to like post" 
+      }));
+    }
+  };
+
+  const handleComment = async (postId) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("You must be logged in to comment");
+      return;
+    }
+
+    const commentText = commentInputs[postId] || "";
+    if (!commentText.trim()) {
+      return;
+    }
+
+    // Clear any previous errors
+    setCommentErrors(prev => ({ ...prev, [postId]: null }));
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/posts/${postId}/comment`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ text: commentText.trim() })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to add comment");
+      }
+
+      // Update comments for this post
+      setPostComments(prev => {
+        const existingComments = prev[postId] || [];
+        return {
+          ...prev,
+          [postId]: [data.newComment, ...existingComments]
+        };
+      });
+
+      // Update post comment count
+      setPosts(prevPosts => 
+        prevPosts.map(post => {
+          if (post._id === postId) {
+            return {
+              ...post,
+              commentsCount: data.commentsCount
+            };
+          }
+          return post;
+        })
+      );
+
+      // Clear comment input for this post
+      setCommentInputs(prev => ({ ...prev, [postId]: "" }));
+    } catch (error) {
+      console.error("Error commenting on post:", error);
+      setCommentErrors(prev => ({ 
+        ...prev, 
+        [postId]: error.message || "Failed to add comment" 
+      }));
+    }
+  };
+
+  const toggleComments = async (postId) => {
+    if (activeCommentPostId === postId) {
+      setActiveCommentPostId(null);
+    } else {
+      setActiveCommentPostId(postId);
+      
+      // Only fetch comments if we don't already have them
+      if (!postComments[postId] || postComments[postId].length === 0) {
+        fetchComments(postId);
+      }
     }
   };
 
@@ -95,6 +280,11 @@ export default function Feed() {
     } else {
       return `${Math.floor(diff / 60)} minutes ago`;
     }
+  };
+
+  // Function to check if a post has comments
+  const hasComments = (postId) => {
+    return postComments[postId] && postComments[postId].length > 0;
   };
 
   if (loading) {
@@ -156,22 +346,23 @@ export default function Feed() {
         <div className="space-y-6">
           {posts.map((post) => (
             <div 
-              key={post.id} 
+              key={post._id} 
               className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg"
             >
               {/* Post Header */}
               <div className="flex items-center p-3 border-b border-gray-200 dark:border-gray-700">
-                <Link href={`/profile/${post.user.id}`} className="w-10 h-10 rounded-full overflow-hidden mr-3">
-                  <img 
-                    src={post.user.profilePic || `https://ui-avatars.com/api/?name=${post.user.username}&background=random`} 
-                    alt={post.user.username}
-                    className="w-full h-full object-cover"
+                <Link 
+                  href={post.user && post.user.username ? `/profile/${post.user.username}` : '#'}
+                  className="flex items-center"
+                >
+                  <img
+                    src={post.user?.profilePic || '/default-avatar.png'}
+                    alt={post.user?.username || 'User'}
+                    className="w-8 h-8 rounded-full object-cover"
                   />
+                  <span className="ml-2 font-medium">{post.user?.username || 'Unknown User'}</span>
                 </Link>
                 <div>
-                  <Link href={`/profile/${post.user.id}`} className="font-medium text-gray-900 dark:text-gray-100">
-                    {post.user.username}
-                  </Link>
                   <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
                     <FiClock className="mr-1 h-3 w-3" />
                     {formatDate(post.createdAt)}
@@ -191,13 +382,23 @@ export default function Feed() {
               {/* Post Actions */}
               <div className="flex justify-between p-3 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex space-x-4">
-                  <button className="flex items-center text-gray-700 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition-colors duration-200">
-                    <FiHeart className="mr-1" />
-                    <span>{post.likesCount}</span>
+                  <button 
+                    onClick={() => handleLike(post._id)}
+                    className="flex items-center text-gray-700 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition-colors duration-200"
+                  >
+                    {post.isLiked ? (
+                      <FaHeart className="mr-1 text-red-500" />
+                    ) : (
+                      <FiHeart className="mr-1" />
+                    )}
+                    <span>{post.likesCount || 0}</span>
                   </button>
-                  <button className="flex items-center text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition-colors duration-200">
+                  <button 
+                    onClick={() => toggleComments(post._id)}
+                    className="flex items-center text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition-colors duration-200"
+                  >
                     <FiMessageCircle className="mr-1" />
-                    <span>{post.commentsCount}</span>
+                    <span>{post.commentsCount || 0}</span>
                   </button>
                 </div>
                 <button className="text-gray-700 dark:text-gray-300 hover:text-yellow-500 dark:hover:text-yellow-400 transition-colors duration-200">
@@ -208,7 +409,9 @@ export default function Feed() {
               {/* Caption */}
               {post.caption && (
                 <div className="p-3 text-sm text-gray-800 dark:text-gray-200">
-                  <span className="font-semibold mr-1">{post.user.username}</span>
+                  <span className="font-semibold mr-1">
+                    {post.user ? post.user.username : 'Unknown User'}
+                  </span>
                   {post.caption}
                 </div>
               )}
@@ -219,10 +422,80 @@ export default function Feed() {
                   📍 {post.location}
                 </div>
               )}
+              
+              {/* Comment Section */}
+              {activeCommentPostId === post._id && (
+                <div className="p-3 border-t border-gray-200 dark:border-gray-700">
+                  {/* Comment Input */}
+                  <div className="flex items-center mb-3">
+                    <input
+                      type="text"
+                      value={commentInputs[post._id] || ""}
+                      onChange={(e) => setCommentInputs(prev => ({ ...prev, [post._id]: e.target.value }))}
+                      placeholder="Add a comment..."
+                      className="flex-grow p-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                    <button
+                      onClick={() => handleComment(post._id)}
+                      disabled={!(commentInputs[post._id] || "").trim()}
+                      className="p-2 rounded-r-md bg-blue-500 text-white text-sm disabled:opacity-50"
+                    >
+                      Post
+                    </button>
+                  </div>
+                  
+                  {/* Comments List */}
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {loadingComments[post._id] ? (
+                      <div className="flex justify-center py-2">
+                        <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-primary"></div>
+                      </div>
+                    ) : commentErrors[post._id] ? (
+                      <div className="text-center text-red-500 dark:text-red-400 text-sm py-2">
+                        {commentErrors[post._id]}
+                        <button 
+                          onClick={() => fetchComments(post._id)} 
+                          className="ml-2 text-blue-500 hover:underline"
+                        >
+                          Retry
+                        </button>
+                      </div>
+                    ) : hasComments(post._id) ? (
+                      postComments[post._id].map((comment) => (
+                        <div key={comment._id} className="flex items-start space-x-2 mb-2">
+                          <Link
+                            href={comment.user && comment.user.username ? `/profile/${comment.user.username}` : '#'}
+                            className="flex-shrink-0"
+                          >
+                            <img
+                              src={comment.user?.profilePic || '/default-avatar.png'}
+                              alt={comment.user?.username || 'User'}
+                              className="w-6 h-6 rounded-full object-cover"
+                            />
+                          </Link>
+                          <div className="flex-1">
+                            <Link
+                              href={comment.user && comment.user.username ? `/profile/${comment.user.username}` : '#'}
+                              className="font-medium hover:underline"
+                            >
+                              {comment.user?.username || 'Unknown User'}
+                            </Link>
+                            <span className="ml-2 text-sm text-gray-600">{comment.text}</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-500 dark:text-gray-400 text-sm py-2">
+                        No comments yet. Be the first to comment!
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
       )}
     </div>
   );
-} 
+}

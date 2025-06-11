@@ -1,20 +1,19 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
 import ThemeToggle from "./ThemeToggle";
-import { FiSearch, FiBell, FiHome, FiPlusSquare, FiMessageCircle, FiUser, FiLogOut, FiLogIn, FiUserPlus } from "react-icons/fi";
+import SearchUsers from "./SearchUsers";
+import { FiBell, FiHome, FiPlusSquare, FiMessageCircle, FiUser, FiLogOut, FiLogIn, FiUserPlus } from "react-icons/fi";
+import NotificationBell from './NotificationBell';
 
 export default function Navbar() {
   const [user, setUser] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const [showResults, setShowResults] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   
-  const searchRef = useRef(null);
   const userMenuRef = useRef(null);
+  const router = useRouter();
   
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -32,9 +31,6 @@ export default function Navbar() {
     
     // Close dropdown when clicking outside
     const handleClickOutside = (event) => {
-      if (searchRef.current && !searchRef.current.contains(event.target)) {
-        setShowResults(false);
-      }
       if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
         setShowUserMenu(false);
       }
@@ -44,31 +40,9 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
   
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      setShowResults(false);
-      return;
-    }
-    
-    setLoading(true);
-    try {
-      const response = await fetch(`http://localhost:5000/api/users/search?query=${searchQuery}`);
-      if (response.ok) {
-        const data = await response.json();
-        setSearchResults(data.users);
-        setShowResults(true);
-      }
-    } catch (error) {
-      console.error("Error searching users:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
   const handleLogout = () => {
     localStorage.removeItem("token");
-    window.location.reload();
+    router.push('/login');
   };
   
   return (
@@ -83,51 +57,8 @@ export default function Navbar() {
           </div>
           
           {/* Search Bar */}
-          <div className="flex-1 max-w-md mx-4 relative" ref={searchRef}>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FiSearch className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
-                placeholder="Search users..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyUp={(e) => e.key === 'Enter' && handleSearch()}
-                onFocus={() => searchResults.length > 0 && setShowResults(true)}
-              />
-              {loading && (
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <div className="animate-spin h-4 w-4 border-2 border-gray-500 rounded-full border-t-transparent"></div>
-                </div>
-              )}
-            </div>
-            
-            {/* Search Results Dropdown */}
-            {showResults && searchResults.length > 0 && (
-              <div className="absolute mt-1 w-full bg-white dark:bg-gray-800 shadow-lg rounded-md overflow-hidden z-10 max-h-60 overflow-y-auto">
-                <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {searchResults.map((user) => (
-                    <li key={user._id}>
-                      <Link href={`/profile/${user.username}`} className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150" onClick={() => setShowResults(false)}>
-                        <div className="flex items-center">
-                          <img 
-                            src={user.profilePic || `https://ui-avatars.com/api/?name=${user.username}&background=random`} 
-                            alt={user.username}
-                            className="h-8 w-8 rounded-full object-cover"
-                          />
-                          <div className="ml-3">
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">{user.username}</p>
-                            {user.fullName && <p className="text-xs text-gray-500 dark:text-gray-400">{user.fullName}</p>}
-                          </div>
-                        </div>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+          <div className="flex-1 max-w-md mx-4 relative">
+            <SearchUsers />
           </div>
           
           {/* Right Navigation Items */}
@@ -150,14 +81,7 @@ export default function Navbar() {
             {user ? (
               <>
                 {/* Notifications */}
-                <Link href="/notifications" className="relative p-1">
-                  <FiBell className="h-6 w-6 text-gray-600 dark:text-gray-300 transition-colors duration-200" style={{ ':hover': { color: 'var(--primary)' } }} />
-                  {notificationCount > 0 && (
-                    <span className="absolute top-0 right-0 h-4 w-4 rounded-full bg-red-500 text-white text-xs font-bold inline-flex items-center justify-center">
-                      {notificationCount}
-                    </span>
-                  )}
-                </Link>
+                <NotificationBell />
                 
                 {/* User Menu */}
                 <div className="relative ml-3" ref={userMenuRef}>
@@ -181,7 +105,7 @@ export default function Navbar() {
                           <p className="font-medium">{user.username}</p>
                           <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
                         </div>
-                        <Link href="/profile" className="inline-block w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150">
+                        <Link href={`/profile/${user.username}`} className="inline-block w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150">
                           <div className="flex items-center">
                             <FiUser className="mr-2 h-4 w-4" />
                             Your Profile
@@ -203,13 +127,11 @@ export default function Navbar() {
               </>
             ) : (
               <div className="flex items-center space-x-2">
-                <Link href="/login" className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white transition-colors duration-150" style={{ backgroundColor: 'var(--primary)', ':hover': { backgroundColor: 'var(--primary-hover)' } }}>
-                  <FiLogIn className="mr-1 h-4 w-4" />
-                  Login
+                <Link href="/login" className="text-gray-600 dark:text-gray-300 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                  <FiLogIn className="h-5 w-5" />
                 </Link>
-                <Link href="/register" className="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
-                  <FiUserPlus className="mr-1 h-4 w-4" />
-                  Sign Up
+                <Link href="/register" className="text-gray-600 dark:text-gray-300 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                  <FiUserPlus className="h-5 w-5" />
                 </Link>
               </div>
             )}

@@ -3,9 +3,10 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const User = require('../models/User');
 const Post = require('../models/Post');
+const Notification = require('../models/Notification');
 
-// Search users by username
-router.get('/search', async (req, res) => {
+// Search users by username or full name
+router.get('/search', auth, async (req, res) => {
   try {
     const { query } = req.query;
     
@@ -13,45 +14,116 @@ router.get('/search', async (req, res) => {
       return res.status(400).json({ message: 'Search query is required' });
     }
     
-    // Search for users whose username contains the query string (case insensitive)
+    // Search for users whose username or fullName contains the query string (case insensitive)
     const users = await User.find({
-      username: { $regex: query, $options: 'i' }
-    }).select('username profilePic fullName').limit(10);
+      $or: [
+        { username: { $regex: query, $options: 'i' } },
+        { fullName: { $regex: query, $options: 'i' } }
+      ]
+    })
+    .select('username profilePic fullName followers')
+    .limit(10);
     
-    res.json({ users });
+    // Add isFollowing field to each user
+    const usersWithFollowStatus = users.map(user => ({
+      id: user._id,
+      username: user.username,
+      profilePic: user.profilePic,
+      fullName: user.fullName,
+      isFollowing: user.followers.includes(req.user._id),
+      followersCount: user.followers.length
+    }));
+    
+    res.json({ users: usersWithFollowStatus });
   } catch (error) {
     console.error('User search error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-// Protected route - Get user profile
-router.get('/profile', auth, async (req, res) => {
+// Get user profile by username
+router.get('/profile/:username', auth, async (req, res) => {
   try {
-    // User is already attached to req by auth middleware
-    const user = await User.findById(req.user._id);
-    const posts = await Post.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const { username } = req.params;
     
+    // Log the request details
+    console.log('Profile request:', {
+      username,
+      requestingUser: req.user._id
+    });
+
+    if (!username) {
+      return res.status(400).json({ message: 'Username is required' });
+    }
+
+    // First try to find by username
+    let user = await User.findOne({ 
+      username: { $regex: new RegExp('^' + username + '$', 'i') }
+    });
+
+    // If not found by username, check if it's a user ID
+    if (!user && username.match(/^[0-9a-fA-F]{24}$/)) {
+      user = await User.findById(username);
+    }
+    
+    // Log the database query result
+    console.log('User found:', user ? 'Yes' : 'No');
+
+    if (!user) {
+      return res.status(404).json({ 
+        message: `User not found. Please check the username and try again.`
+      });
+    }
+
+    const posts = await Post.find({ user: user._id })
+      .sort({ createdAt: -1 })
+      .populate('likes', 'username profilePic')
+      .populate({
+        path: 'comments',
+        populate: {
+          path: 'user',
+          select: 'username profilePic'
+        }
+      });
+    
+    // Log the response data structure
+    console.log('Sending profile response for:', user.username);
+
     res.json({
       user: {
+        _id: user._id,
         id: user._id,
         username: user.username,
-        email: user.email,
+        email: user._id.equals(req.user._id) ? user.email : undefined,
         profilePic: user.profilePic,
         bio: user.bio,
         fullName: user.fullName,
-        followersCount: user.followers ? user.followers.length : 0,
-        followingCount: user.following ? user.following.length : 0,
+        followersCount: user.followers.length,
+        followingCount: user.following.length,
+        isFollowing: user.followers.includes(req.user._id),
+        isCurrentUser: user._id.equals(req.user._id),
         postsCount: posts.length,
         createdAt: user.createdAt,
         posts: posts.map(post => ({
+          _id: post._id,
           id: post._id,
           imageUrl: post.imageUrl,
           imageData: post.imageData,
           caption: post.caption,
-          likesCount: post.likes ? post.likes.length : 0,
-          commentsCount: post.comments ? post.comments.length : 0,
-          createdAt: post.createdAt
+          likesCount: post.likes.length,
+          commentsCount: post.comments.length,
+          isLiked: post.likes.some(like => like._id.equals(req.user._id)),
+          createdAt: post.createdAt,
+          comments: post.comments.map(comment => ({
+            id: comment._id,
+            text: comment.text,
+            date: comment.date,
+            user: {
+              id: comment.user._id,
+              username: comment.user.username,
+              profilePic: comment.user.profilePic
+            }
+          }))
         }))
       }
     });
@@ -61,43 +133,169 @@ router.get('/profile', auth, async (req, res) => {
   }
 });
 
-// Update user profile
-router.put('/profile', auth, async (req, res) => {
+// Follow/Unfollow a user
+router.post('/follow/:userId', auth, async (req, res) => {
   try {
-    const { fullName, bio, profilePic } = req.body;
-    const updateFields = {};
-    
-    if (fullName) updateFields.fullName = fullName;
-    if (bio) updateFields.bio = bio;
-    
-    // Store the profile picture directly in the database as a base64 string
-    if (profilePic) {
-      // If it's already a full base64 data URL, store it as is
-      // If it's not, you might need to do some conversion depending on your frontend implementation
-      updateFields.profilePic = profilePic;
+    console.log('Follow request received:', {
+      targetUserId: req.params.userId,
+      currentUserId: req.user._id.toString()
+    });
+
+    if (req.params.userId === req.user._id.toString()) {
+      return res.status(400).json({ message: 'You cannot follow yourself' });
     }
+
+    // Find users with lean() to get plain objects
+    const userToFollow = await User.findById(req.params.userId);
+    console.log('User to follow found:', userToFollow ? 'Yes' : 'No');
     
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
-      { $set: updateFields },
-      { new: true }
-    );
+    if (!userToFollow) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const currentUser = await User.findById(req.user._id);
+    console.log('Current user found:', currentUser ? 'Yes' : 'No');
+    
+    if (!currentUser) {
+      return res.status(404).json({ message: 'Current user not found' });
+    }
+
+    const isFollowing = userToFollow.followers.includes(req.user._id);
+    console.log('Current follow status:', { isFollowing });
+    
+    try {
+      if (isFollowing) {
+        // Unfollow - Use updateOne to modify only the necessary fields
+        await User.updateOne(
+          { _id: userToFollow._id },
+          { $pull: { followers: req.user._id } }
+        );
+        await User.updateOne(
+          { _id: currentUser._id },
+          { $pull: { following: userToFollow._id } }
+        );
+        console.log('Unfollowed successfully');
+      } else {
+        // Follow - Use updateOne to modify only the necessary fields
+        await User.updateOne(
+          { _id: userToFollow._id },
+          { $addToSet: { followers: req.user._id } }
+        );
+        await User.updateOne(
+          { _id: currentUser._id },
+          { $addToSet: { following: userToFollow._id } }
+        );
+        console.log('Followed successfully');
+
+        try {
+          // Create notification for new follow
+          const notification = new Notification({
+            recipient: userToFollow._id,
+            sender: req.user._id,
+            type: 'follow'
+          });
+          await notification.save();
+          console.log('Notification created successfully');
+
+          // Send real-time notification if user is connected
+          const io = req.app.get('io');
+          const connectedUsers = req.app.get('connectedUsers');
+          const recipientSocketId = connectedUsers.get(userToFollow._id.toString());
+          if (recipientSocketId) {
+            io.to(recipientSocketId).emit('notification', {
+              type: 'follow',
+              sender: {
+                id: req.user._id,
+                username: req.user.username,
+                profilePic: req.user.profilePic
+              }
+            });
+            console.log('Real-time notification sent');
+          }
+        } catch (notifError) {
+          console.error('Notification error:', notifError);
+          // Don't fail the follow operation if notification fails
+        }
+      }
+
+      // Get updated followers count
+      const updatedUser = await User.findById(userToFollow._id);
+      
+      return res.json({
+        isFollowing: !isFollowing,
+        followersCount: updatedUser.followers.length
+      });
+    } catch (updateError) {
+      console.error('Error updating follow status:', updateError);
+      throw updateError;
+    }
+  } catch (error) {
+    console.error('Follow/unfollow error:', {
+      error: error.message,
+      stack: error.stack,
+      userId: req.params.userId
+    });
+    res.status(500).json({ 
+      message: 'Server error', 
+      error: error.message,
+      details: 'Error occurred while processing follow/unfollow request'
+    });
+  }
+});
+
+// Get current user's profile
+router.get('/profile', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    const posts = await Post.find({ user: req.user._id })
+      .sort({ createdAt: -1 })
+      .populate('likes', 'username profilePic')
+      .populate({
+        path: 'comments',
+        populate: {
+          path: 'user',
+          select: 'username profilePic'
+        }
+      });
     
     res.json({
       user: {
+        _id: user._id,
         id: user._id,
         username: user.username,
         email: user.email,
         profilePic: user.profilePic,
         bio: user.bio,
         fullName: user.fullName,
-        followersCount: user.followers ? user.followers.length : 0,
-        followingCount: user.following ? user.following.length : 0,
-        createdAt: user.createdAt
+        followersCount: user.followers.length,
+        followingCount: user.following.length,
+        postsCount: posts.length,
+        createdAt: user.createdAt,
+        posts: posts.map(post => ({
+          _id: post._id,
+          id: post._id,
+          imageUrl: post.imageUrl,
+          imageData: post.imageData,
+          caption: post.caption,
+          likesCount: post.likes.length,
+          commentsCount: post.comments.length,
+          isLiked: post.likes.some(like => like._id.equals(req.user._id)),
+          createdAt: post.createdAt,
+          comments: post.comments.map(comment => ({
+            id: comment._id,
+            text: comment.text,
+            date: comment.date,
+            user: {
+              id: comment.user._id,
+              username: comment.user.username,
+              profilePic: comment.user.profilePic
+            }
+          }))
+        }))
       }
     });
   } catch (error) {
-    console.error('Profile update error:', error);
+    console.error('Profile fetch error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });

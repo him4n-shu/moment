@@ -13,8 +13,14 @@ const auth = async (req, res, next) => {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Find user by id
-    const user = await User.findById(decoded.userId).select('-password');
+    // Find user by id (handle both formats)
+    const userId = decoded.userId || decoded.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ message: 'Invalid token format' });
+    }
+
+    const user = await User.findById(userId).select('-password');
     
     if (!user) {
       return res.status(401).json({ message: 'Token is not valid' });
@@ -24,6 +30,7 @@ const auth = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
+    console.error('Auth middleware error:', error);
     res.status(401).json({ message: 'Token is not valid' });
   }
 };

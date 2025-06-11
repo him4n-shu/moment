@@ -6,6 +6,7 @@ const User = require('../models/User');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const Notification = require('../models/Notification');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -152,96 +153,174 @@ router.get('/feed', auth, async (req, res) => {
     // Get all posts from all users, sorted by most recent first
     const posts = await Post.find()
       .sort({ createdAt: -1 })
-      .populate('user', 'username profilePic');
+      .populate('user', 'username profilePic')
+      .populate('likes', 'username profilePic')
+      .populate({
+        path: 'comments',
+        populate: {
+          path: 'user',
+          select: 'username profilePic'
+        }
+      });
     
     res.json({
+      success: true,
       posts: posts.map(post => ({
-        id: post._id,
+        _id: post._id,
         imageUrl: post.imageUrl,
-        imageData: post.imageData, // Include the base64 image data for direct display
+        imageData: post.imageData,
         caption: post.caption,
-        likesCount: post.likes ? post.likes.length : 0,
-        commentsCount: post.comments ? post.comments.length : 0,
+        likesCount: post.likes.length,
+        commentsCount: post.comments.length,
         location: post.location,
+        isLiked: post.likes.some(like => like._id.toString() === req.user._id.toString()),
         user: {
           id: post.user._id,
           username: post.user.username,
-          profilePic: post.user.profilePic
+          profilePic: post.user.profilePic || null
         },
+        comments: post.comments.map(comment => ({
+          id: comment._id,
+          text: comment.text,
+          date: comment.date,
+          user: {
+            id: comment.user._id,
+            username: comment.user.username,
+            profilePic: comment.user.profilePic || null
+          }
+        })),
         createdAt: post.createdAt
       }))
     });
   } catch (error) {
     console.error('Feed fetch error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to fetch feed',
+      error: error.message 
+    });
   }
 });
 
-// Like/unlike a post
+// Like a post
 router.post('/:id/like', auth, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
-    
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
-    
-    // Check if the post has already been liked by this user
-    const alreadyLiked = post.likes.some(like => like.toString() === req.user._id.toString());
-    
-    if (alreadyLiked) {
-      // Unlike the post
-      post.likes = post.likes.filter(like => like.toString() !== req.user._id.toString());
+
+    const isLiked = post.likes.includes(req.user._id);
+    if (isLiked) {
+      post.likes = post.likes.filter(id => id.toString() !== req.user._id.toString());
     } else {
-      // Like the post
       post.likes.push(req.user._id);
+      
+      // Create notification for post like
+      if (post.user.toString() !== req.user._id.toString()) {
+        const notification = new Notification({
+          recipient: post.user,
+          sender: req.user._id,
+          type: 'like',
+          post: post._id
+        });
+        await notification.save();
+
+        // Get Socket.IO instance and connected users
+        const io = req.app.get('io');
+        const connectedUsers = req.app.get('connectedUsers');
+        
+        // If recipient is connected, send real-time notification
+        const recipientSocketId = connectedUsers.get(post.user.toString());
+        if (recipientSocketId) {
+          io.to(recipientSocketId).emit('notification', {
+            type: 'like',
+            sender: req.user,
+            post: post
+          });
+        }
+      }
     }
-    
+
     await post.save();
-    
-    res.json({
-      likes: post.likes,
+    res.json({ 
+      isLiked: !isLiked,
       likesCount: post.likes.length
     });
   } catch (error) {
-    console.error('Post like error:', error);
+    console.error('Error liking post:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-// Comment on a post
+// Add comment to a post
 router.post('/:id/comment', auth, async (req, res) => {
   try {
     const { text } = req.body;
-    
-    if (!text) {
+    if (!text || !text.trim()) {
       return res.status(400).json({ message: 'Comment text is required' });
     }
-    
+
     const post = await Post.findById(req.params.id);
-    
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
-    
-    const newComment = {
-      user: req.user._id,
-      text
+
+    // Get the full user data
+    const user = await User.findById(req.user._id).select('username profilePic');
+
+    const comment = {
+      user: user._id,
+      text: text.trim(),
+      date: new Date()
     };
-    
-    post.comments.unshift(newComment);
+
+    post.comments.unshift(comment);
     await post.save();
-    
-    // Populate the user details for the new comment
-    const populatedPost = await Post.findById(post._id)
-      .populate('comments.user', 'username profilePic');
-    
-    res.status(201).json({
-      comments: populatedPost.comments,
-      commentsCount: populatedPost.comments.length
+
+    // Create notification for comment
+    if (post.user.toString() !== req.user._id.toString()) {
+      const notification = new Notification({
+        recipient: post.user,
+        sender: req.user._id,
+        type: 'comment',
+        post: post._id
+      });
+      await notification.save();
+
+      // Get Socket.IO instance and connected users
+      const io = req.app.get('io');
+      const connectedUsers = req.app.get('connectedUsers');
+      
+      // If recipient is connected, send real-time notification
+      const recipientSocketId = connectedUsers.get(post.user.toString());
+      if (recipientSocketId) {
+        io.to(recipientSocketId).emit('notification', {
+          type: 'comment',
+          sender: req.user,
+          post: post
+        });
+      }
+    }
+
+    // Format the new comment to match the frontend's expected structure
+    const newComment = {
+      id: comment._id,
+      text: comment.text,
+      date: comment.date,
+      user: {
+        id: user._id,
+        username: user.username,
+        profilePic: user.profilePic || null
+      }
+    };
+
+    res.json({ 
+      newComment,
+      commentsCount: post.comments.length 
     });
   } catch (error) {
-    console.error('Comment creation error:', error);
+    console.error('Error adding comment:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
