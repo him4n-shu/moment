@@ -15,17 +15,21 @@ export function SocketProvider({ children }) {
     // Initialize socket connection with auth token
     const newSocket = io('http://localhost:5000', {
       auth: { token },
-      transports: ['polling', 'websocket'], // Try polling first, then upgrade to websocket
+      transports: ['polling', 'websocket'],
       reconnection: true,
-      reconnectionAttempts: Infinity, // Keep trying to reconnect
+      reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       timeout: 20000,
       autoConnect: true,
       path: '/socket.io/',
       withCredentials: true,
-      forceNew: true, // Force a new connection
-      upgrade: true, // Allow transport upgrade
+      forceNew: true,
+      upgrade: true,
+      rejectUnauthorized: false,
+      extraHeaders: {
+        Authorization: `Bearer ${token}`
+      }
     });
 
     // Socket event handlers
@@ -46,8 +50,12 @@ export function SocketProvider({ children }) {
         return;
       }
 
-      // For other errors, socket.io will automatically try to reconnect
-      console.log('Attempting to reconnect...');
+      // For other errors, implement exponential backoff
+      const retryDelay = Math.min(1000 * Math.pow(2, newSocket.reconnectAttempts || 0), 10000);
+      console.log(`Attempting to reconnect in ${retryDelay}ms...`);
+      setTimeout(() => {
+        newSocket.connect();
+      }, retryDelay);
     });
 
     newSocket.on('disconnect', (reason) => {

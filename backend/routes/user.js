@@ -45,12 +45,6 @@ router.get('/search', auth, async (req, res) => {
 router.get('/profile/:username', auth, async (req, res) => {
   try {
     const { username } = req.params;
-    
-    // Log the request details
-    console.log('Profile request:', {
-      username,
-      requestingUser: req.user._id
-    });
 
     if (!username) {
       return res.status(400).json({ message: 'Username is required' });
@@ -65,9 +59,6 @@ router.get('/profile/:username', auth, async (req, res) => {
     if (!user && username.match(/^[0-9a-fA-F]{24}$/)) {
       user = await User.findById(username);
     }
-    
-    // Log the database query result
-    console.log('User found:', user ? 'Yes' : 'No');
 
     if (!user) {
       return res.status(404).json({ 
@@ -85,9 +76,6 @@ router.get('/profile/:username', auth, async (req, res) => {
           select: 'username profilePic'
         }
       });
-    
-    // Log the response data structure
-    console.log('Sending profile response for:', user.username);
 
     res.json({
       user: {
@@ -296,6 +284,94 @@ router.get('/profile', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Profile fetch error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Update user profile
+router.put('/profile', auth, async (req, res) => {
+  try {
+    const { fullName, bio, profilePic } = req.body;
+    
+    // Find user and update
+    const user = await User.findById(req.user._id);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Update fields if provided
+    if (fullName) user.fullName = fullName;
+    if (bio !== undefined) user.bio = bio;
+    if (profilePic !== undefined) user.profilePic = profilePic;
+
+    await user.save();
+
+    // Return updated user data
+    res.json({
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        profilePic: user.profilePic,
+        bio: user.bio,
+        fullName: user.fullName,
+        followersCount: user.followers.length,
+        followingCount: user.following.length
+      }
+    });
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Get user's followers
+router.get('/followers/:userId', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId)
+      .populate('followers', 'username profilePic fullName');
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const followers = user.followers.map(follower => ({
+      id: follower._id,
+      username: follower.username,
+      profilePic: follower.profilePic,
+      fullName: follower.fullName,
+      isFollowing: follower.followers.includes(req.user._id)
+    }));
+
+    res.json({ followers });
+  } catch (error) {
+    console.error('Error fetching followers:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Get user's following
+router.get('/following/:userId', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId)
+      .populate('following', 'username profilePic fullName');
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const following = user.following.map(followed => ({
+      id: followed._id,
+      username: followed.username,
+      profilePic: followed.profilePic,
+      fullName: followed.fullName,
+      isFollowing: true // Since these are users we're following
+    }));
+
+    res.json({ following });
+  } catch (error) {
+    console.error('Error fetching following:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });

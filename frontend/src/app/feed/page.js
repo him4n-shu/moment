@@ -312,9 +312,9 @@ export default function Feed() {
 
   return (
     <div className="max-w-3xl mx-auto pt-4 md:pt-8 px-3 md:px-6 pb-20">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-2">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Global Feed</h1>
-        <div className="flex items-center">
+        <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto">
           <button 
             onClick={handleManualRefresh} 
             disabled={refreshing}
@@ -333,49 +333,45 @@ export default function Feed() {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center">
           <p className="text-gray-700 dark:text-gray-300 mb-4">No posts available yet.</p>
           <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-            Be the first to share something amazing!
+            Follow some users to see their posts in your feed, or check back later for new content.
           </p>
-          <Link 
-            href="/post/new" 
-            className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Create a Post
+          <Link href="/friends" className="inline-block px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+            Find People to Follow
           </Link>
         </div>
       ) : (
         <div className="space-y-6">
           {posts.map((post) => (
-            <div 
-              key={post._id} 
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg"
-            >
+            <div key={post._id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg">
               {/* Post Header */}
               <div className="flex items-center p-3 border-b border-gray-200 dark:border-gray-700">
-                <Link 
-                  href={post.user && post.user.username ? `/profile/${post.user.username}` : '#'}
-                  className="flex items-center"
-                >
-                  <img
-                    src={post.user?.profilePic || '/default-avatar.png'}
-                    alt={post.user?.username || 'User'}
-                    className="w-8 h-8 rounded-full object-cover"
+                <Link href={`/profile/${post.user.username}`} className="flex items-center">
+                  <img 
+                    src={post.user.profilePic || `https://ui-avatars.com/api/?name=${post.user.username}&background=random`} 
+                    alt={post.user.username} 
+                    className="w-10 h-10 rounded-full object-cover"
                   />
-                  <span className="ml-2 font-medium">{post.user?.username || 'Unknown User'}</span>
-                </Link>
-                <div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
-                    <FiClock className="mr-1 h-3 w-3" />
-                    {formatDate(post.createdAt)}
+                  <div className="ml-3">
+                    <div className="font-medium">{post.user.username}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
+                      {formatDate(post.createdAt)}
+                      {post.location && (
+                        <>
+                          <span className="mx-1">•</span>
+                          <span>{post.location}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </Link>
               </div>
               
-              {/* Post Image - Use imageData if available, otherwise fall back to imageUrl */}
-              <div className="relative aspect-square w-full">
+              {/* Post Image */}
+              <div className="relative">
                 <img 
                   src={post.imageData || post.imageUrl} 
-                  alt="Post" 
-                  className="w-full h-full object-cover"
+                  alt={post.caption || "Post image"} 
+                  className="w-full h-auto max-h-[600px] object-contain bg-black"
                 />
               </div>
               
@@ -387,61 +383,66 @@ export default function Feed() {
                     className="flex items-center text-gray-700 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition-colors duration-200"
                   >
                     {post.isLiked ? (
-                      <FaHeart className="mr-1 text-red-500" />
+                      <FaHeart className="h-6 w-6 fill-red-500 text-red-500" />
                     ) : (
-                      <FiHeart className="mr-1" />
+                      <FiHeart className="h-6 w-6" />
                     )}
-                    <span>{post.likesCount || 0}</span>
+                    <span className="ml-1 text-sm">{post.likesCount || 0}</span>
                   </button>
                   <button 
                     onClick={() => toggleComments(post._id)}
                     className="flex items-center text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition-colors duration-200"
                   >
-                    <FiMessageCircle className="mr-1" />
-                    <span>{post.commentsCount || 0}</span>
+                    <FiMessageCircle className="h-6 w-6" />
+                    <span className="ml-1 text-sm">{post.commentsCount || 0}</span>
+                  </button>
+                  <button className="text-gray-700 dark:text-gray-300 hover:text-yellow-500 dark:hover:text-yellow-400 transition-colors duration-200">
+                    <FiBookmark className="h-6 w-6" />
                   </button>
                 </div>
-                <button className="text-gray-700 dark:text-gray-300 hover:text-yellow-500 dark:hover:text-yellow-400 transition-colors duration-200">
-                  <FiBookmark />
+                <button className="text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400">
+                  <FiBookmark className="h-6 w-6" />
                 </button>
               </div>
               
-              {/* Caption */}
-              {post.caption && (
-                <div className="p-3 text-sm text-gray-800 dark:text-gray-200">
-                  <span className="font-semibold mr-1">
-                    {post.user ? post.user.username : 'Unknown User'}
-                  </span>
+              {/* Post Caption */}
+              <div className="p-3 text-sm text-gray-800 dark:text-gray-200">
+                <p>
+                  <Link href={`/profile/${post.user.username}`} className="font-bold mr-2">
+                    {post.user.username}
+                  </Link>
                   {post.caption}
-                </div>
-              )}
+                </p>
+              </div>
               
-              {/* Location */}
-              {post.location && (
-                <div className="px-3 pb-3 text-xs text-gray-500 dark:text-gray-400">
-                  📍 {post.location}
-                </div>
-              )}
+              {/* Post Date */}
+              <div className="px-3 pb-3 text-xs text-gray-500 dark:text-gray-400">
+                {new Date(post.createdAt).toLocaleDateString()}
+              </div>
               
-              {/* Comment Section */}
+              {/* Comments Section - Conditionally shown */}
               {activeCommentPostId === post._id && (
                 <div className="p-3 border-t border-gray-200 dark:border-gray-700">
-                  {/* Comment Input */}
-                  <div className="flex items-center mb-3">
-                    <input
-                      type="text"
-                      value={commentInputs[post._id] || ""}
-                      onChange={(e) => setCommentInputs(prev => ({ ...prev, [post._id]: e.target.value }))}
-                      placeholder="Add a comment..."
-                      className="flex-grow p-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                    <button
-                      onClick={() => handleComment(post._id)}
-                      disabled={!(commentInputs[post._id] || "").trim()}
-                      className="p-2 rounded-r-md bg-blue-500 text-white text-sm disabled:opacity-50"
-                    >
-                      Post
-                    </button>
+                  <div className="mb-4">
+                    <form onSubmit={(e) => {
+                      e.preventDefault();
+                      handleComment(post._id);
+                    }} className="flex">
+                      <input
+                        type="text"
+                        value={commentInputs[post._id] || ''}
+                        onChange={(e) => setCommentInputs(prev => ({ ...prev, [post._id]: e.target.value }))}
+                        placeholder="Add a comment..."
+                        className="flex-grow p-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                      <button
+                        type="submit"
+                        disabled={!commentInputs[post._id]?.trim()}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-r-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Post
+                      </button>
+                    </form>
                   </div>
                   
                   {/* Comments List */}
@@ -462,25 +463,24 @@ export default function Feed() {
                       </div>
                     ) : hasComments(post._id) ? (
                       postComments[post._id].map((comment) => (
-                        <div key={comment._id} className="flex items-start space-x-2 mb-2">
-                          <Link
-                            href={comment.user && comment.user.username ? `/profile/${comment.user.username}` : '#'}
-                            className="flex-shrink-0"
-                          >
-                            <img
-                              src={comment.user?.profilePic || '/default-avatar.png'}
-                              alt={comment.user?.username || 'User'}
-                              className="w-6 h-6 rounded-full object-cover"
+                        <div key={comment._id} className="flex items-start mb-3">
+                          <Link href={`/profile/${comment.user.username}`} className="flex-shrink-0">
+                            <img 
+                              src={comment.user.profilePic || `https://ui-avatars.com/api/?name=${comment.user.username}&background=random`}
+                              alt={comment.user.username}
+                              className="w-8 h-8 rounded-full object-cover mr-2"
                             />
                           </Link>
-                          <div className="flex-1">
-                            <Link
-                              href={comment.user && comment.user.username ? `/profile/${comment.user.username}` : '#'}
-                              className="font-medium hover:underline"
-                            >
-                              {comment.user?.username || 'Unknown User'}
-                            </Link>
-                            <span className="ml-2 text-sm text-gray-600">{comment.text}</span>
+                          <div className="flex-1 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2">
+                            <div className="flex justify-between items-start">
+                              <Link href={`/profile/${comment.user.username}`} className="font-medium text-sm">
+                                {comment.user.username}
+                              </Link>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                {formatDate(comment.createdAt)}
+                              </span>
+                            </div>
+                            <p className="text-sm mt-1">{comment.text}</p>
                           </div>
                         </div>
                       ))

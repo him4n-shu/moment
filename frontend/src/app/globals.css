@@ -18,29 +18,6 @@
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
-.dark {
-  --background: #121212;
-  --foreground: #e5e7eb;
-  --card-bg: #1e1e1e;
-  --border-color: #2d2d2d;
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
-  --navbar-bg: #1e1e1e;
-  --navbar-text: #e5e7eb;
-  --navbar-border: #2d2d2d;
-  --sidebar-bg: #111111;
-  --sidebar-hover: #1f1f1f;
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);

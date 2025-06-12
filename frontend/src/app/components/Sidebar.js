@@ -1,26 +1,89 @@
 "use client";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import ThemeToggle from "./ThemeToggle";
+import { FiWifiOff } from "react-icons/fi";
 
 export default function Sidebar() {
   const [user, setUser] = useState(null);
+  const [isOffline, setIsOffline] = useState(false);
+  
+  // Handle online/offline status
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    // Set initial state
+    setIsOffline(!navigator.onLine);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
   
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      // Fetch user profile if logged in
-      fetch("http://localhost:5000/api/users/profile", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then(res => res.ok ? res.json() : null)
-        .then(data => data ? setUser(data.user) : null)
-        .catch(err => console.error("Error fetching user:", err));
+      // Fetch user profile if logged in with retry logic
+      const fetchUserProfile = async () => {
+        let retries = 0;
+        const maxRetries = 3;
+        
+        while (retries < maxRetries) {
+          try {
+            const response = await fetch("http://localhost:5000/api/users/profile", {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            
+            if (!response.ok) {
+              if (response.status === 401) {
+                // Token invalid, redirect to login
+                localStorage.removeItem("token");
+                window.location.href = "/login";
+                return;
+              }
+              throw new Error(`Server responded with ${response.status}`);
+            }
+            
+            const data = await response.json();
+            if (data && data.user) {
+              setUser(data.user);
+              return; // Success, exit retry loop
+            }
+          } catch (err) {
+            console.error(`Error fetching user (attempt ${retries + 1}/${maxRetries}):`, err);
+            retries++;
+            
+            if (retries >= maxRetries) {
+              // Max retries reached, check if network issue
+              if (!navigator.onLine || err.message === "Failed to fetch") {
+                setIsOffline(true);
+              }
+              return;
+            }
+            
+            // Wait before retry (exponential backoff)
+            await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retries)));
+          }
+        }
+      };
+      
+      fetchUserProfile();
     }
   }, []);
 
   return (
     <div className="h-screen fixed left-0 top-0 w-16 text-white flex flex-col items-center py-4 shadow-lg transition-colors duration-300" style={{ backgroundColor: 'var(--sidebar-bg)' }}>
+      {/* Offline indicator */}
+      {isOffline && (
+        <div className="absolute top-2 right-2 text-amber-500" title="You are offline">
+          <FiWifiOff />
+        </div>
+      )}
+      
       {/* Logo - Home */}
       <Link href="/" className="p-3 rounded-lg mb-6 transition-colors duration-200" style={{ backgroundColor: 'transparent', ":hover": { backgroundColor: 'var(--sidebar-hover)' }}}>
         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -69,11 +132,6 @@ export default function Sidebar() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
         </svg>
       </Link>
-      
-      {/* Theme Toggle */}
-      <div className="my-2">
-        <ThemeToggle />
-      </div>
       
       {/* Settings - Bottom */}
       <div className="mt-auto">

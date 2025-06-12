@@ -1,7 +1,9 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { FiGrid, FiHeart, FiMessageCircle } from 'react-icons/fi';
+import { FiGrid, FiHeart, FiMessageCircle, FiEdit2, FiCamera } from 'react-icons/fi';
+import EditProfileModal from '../../components/EditProfileModal';
+import Link from 'next/link';
 
 export default function UserProfile() {
   const { username } = useParams();
@@ -10,6 +12,7 @@ export default function UserProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [followLoading, setFollowLoading] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -209,6 +212,46 @@ export default function UserProfile() {
     }
   };
 
+  // Add handleEditProfile function
+  const handleEditProfile = () => {
+    setIsEditModalOpen(true);
+  };
+  
+  // Add handleProfileUpdate function
+  const handleProfileUpdate = (updatedProfile) => {
+    setProfile(prev => ({
+      ...prev,
+      ...updatedProfile
+    }));
+  };
+
+  // Add handleStartChat function
+  const handleStartChat = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/chat/conversations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userId: profile._id
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to start conversation');
+      }
+
+      const data = await response.json();
+      router.push(`/messages?conversation=${data.conversationId}`);
+    } catch (error) {
+      console.error('Error starting chat:', error);
+      setError(error.message);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -253,45 +296,77 @@ export default function UserProfile() {
       
       {/* Profile Header */}
       <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
-        <img
-          src={profile.profilePic || '/default-avatar.png'}
-          alt={profile.username}
-          className="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
-        />
+        {/* Profile Picture with Edit Option */}
+        <div className="relative">
+          <img
+            src={profile.profilePic || '/default-avatar.png'}
+            alt={profile.username}
+            className="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
+          />
+          {profile.isCurrentUser && (
+            <div 
+              className="absolute bottom-0 right-0 p-2 bg-white dark:bg-gray-800 rounded-full shadow-lg cursor-pointer"
+              onClick={handleEditProfile}
+            >
+              <FiCamera className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            </div>
+          )}
+        </div>
         
         <div className="flex-1">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-4">
             <h1 className="text-2xl font-bold">{profile.username}</h1>
-            {!profile.isCurrentUser && (
+            {profile.isCurrentUser ? (
               <button
-                onClick={handleFollow}
-                disabled={followLoading}
-                className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 ${
-                  followLoading ? 'opacity-50 cursor-not-allowed' : ''
-                } ${
-                  profile.isFollowing
-                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
-                    : 'bg-blue-500 text-white hover:bg-blue-600'
-                }`}
+                onClick={handleEditProfile}
+                className="px-6 py-2 rounded-lg font-medium bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200 flex items-center gap-2"
               >
-                {followLoading ? 'Loading...' : profile.isFollowing ? 'Following' : 'Follow'}
+                <FiEdit2 className="w-4 h-4" />
+                Edit Profile
               </button>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  onClick={handleFollow}
+                  disabled={followLoading}
+                  className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 ${
+                    followLoading ? 'opacity-50 cursor-not-allowed' : ''
+                  } ${
+                    profile.isFollowing
+                      ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
+                      : 'bg-blue-500 text-white hover:bg-blue-600'
+                  }`}
+                >
+                  {followLoading ? 'Loading...' : profile.isFollowing ? 'Following' : 'Follow'}
+                </button>
+                <button
+                  onClick={handleStartChat}
+                  className="px-6 py-2 rounded-lg font-medium bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200 flex items-center gap-2"
+                >
+                  <FiMessageCircle className="w-4 h-4" />
+                  Message
+                </button>
+              </div>
             )}
           </div>
 
-          <div className="flex gap-8 my-6 justify-center md:justify-start">
-            <div className="text-center md:text-left">
-              <div className="font-bold">{profile.postsCount}</div>
-              <div className="text-gray-500">posts</div>
+          {/* Stats */}
+          <div className="flex space-x-4 md:space-x-6 mb-4 justify-center md:justify-start text-sm md:text-base">
+            <div>
+              <span className="font-semibold">{profile.postsCount || 0}</span> posts
             </div>
-            <div className="text-center md:text-left">
-              <div className="font-bold">{profile.followersCount}</div>
-              <div className="text-gray-500">followers</div>
-            </div>
-            <div className="text-center md:text-left">
-              <div className="font-bold">{profile.followingCount}</div>
-              <div className="text-gray-500">following</div>
-            </div>
+            <Link 
+              href="/friends?tab=followers" 
+              className="hover:text-blue-500 transition-colors cursor-pointer"
+            >
+              <span className="font-semibold">{profile.followersCount || 0}</span> followers
+            </Link>
+            <Link 
+              href="/friends?tab=following" 
+              className="hover:text-blue-500 transition-colors cursor-pointer"
+            >
+              <span className="font-semibold">{profile.followingCount || 0}</span> following
+            </Link>
           </div>
 
           <div>
@@ -312,7 +387,7 @@ export default function UserProfile() {
             {profile.posts.map(post => (
               <div key={post.id} className="aspect-square relative group">
                 <img
-                  src={post.imageUrl || post.imageData}
+                  src={post.imageData || post.imageUrl}
                   alt={post.caption}
                   className="w-full h-full object-cover"
                 />
@@ -333,6 +408,16 @@ export default function UserProfile() {
           </div>
         )}
       </div>
+
+      {/* Add EditProfileModal component */}
+      {profile.isCurrentUser && (
+        <EditProfileModal
+          profile={profile}
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onUpdate={handleProfileUpdate}
+        />
+      )}
     </div>
   );
 } 

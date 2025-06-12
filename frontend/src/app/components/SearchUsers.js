@@ -93,7 +93,7 @@ export default function SearchUsers() {
   };
 
   return (
-    <div className="relative" ref={searchRef}>
+    <div className="relative w-full max-w-[250px] md:max-w-md" ref={searchRef}>
       <div className="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-sm">
         <div className="flex-1 flex items-center">
           <FiSearch className="ml-3 text-gray-400" />
@@ -123,7 +123,7 @@ export default function SearchUsers() {
       </div>
 
       {showResults && (results.length > 0 || loading || error) && (
-        <div className="absolute w-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+        <div className="absolute w-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto min-w-[280px]">
           {loading && (
             <div className="p-4 text-center text-gray-500">
               Searching...
@@ -139,7 +139,7 @@ export default function SearchUsers() {
           {!loading && !error && results.map(user => (
             <div
               key={user.id}
-              className="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between"
+              className="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between flex-wrap sm:flex-nowrap"
             >
               <Link
                 href={`/profile/${user.username}`}
@@ -161,7 +161,7 @@ export default function SearchUsers() {
               
               <button
                 onClick={() => handleFollow(user.id, user.isFollowing)}
-                className={`px-4 py-1 rounded-full text-sm font-medium ${
+                className={`px-4 py-1 rounded-full text-sm font-medium mt-2 sm:mt-0 ${
                   user.isFollowing
                     ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
                     : 'bg-blue-500 text-white'

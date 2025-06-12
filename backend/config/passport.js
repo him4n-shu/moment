@@ -4,11 +4,11 @@ const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
 const User = require('../models/User');
 
-// Debug: Check if Google credentials are loaded
+// Debug
 console.log('Google Client ID:', process.env.GOOGLE_CLIENT_ID ? 'Present' : 'Missing');
 console.log('Google Client Secret:', process.env.GOOGLE_CLIENT_SECRET ? 'Present' : 'Missing');
 
-// Google OAuth Strategy
+// Google OAuth
 passport.use(
   new GoogleStrategy(
     {

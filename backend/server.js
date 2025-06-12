@@ -1,4 +1,3 @@
-// server/server.js
 require('dotenv').config();
 const express = require("express");
 const mongoose = require("mongoose");
@@ -24,21 +23,32 @@ const httpServer = createServer(app);
 // Configure CORS for both Express and Socket.IO
 const corsOptions = {
   origin: "http://localhost:3000",
-  methods: ["GET", "POST"],
-  credentials: true
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"]
 };
 
 app.use(cors(corsOptions));
 
 // Initialize Socket.IO with extended configuration
 const io = new Server(httpServer, {
-  cors: corsOptions,
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"]
+  },
   pingTimeout: 60000,
   pingInterval: 25000,
-  transports: ['websocket', 'polling'],
+  transports: ['polling', 'websocket'], 
   allowEIO3: true,
-  maxHttpBufferSize: 1e8, // 100 MB
+  maxHttpBufferSize: 1e8, 
   path: '/socket.io/',
+  cookie: {
+    name: 'io',
+    httpOnly: true,
+    sameSite: 'strict'
+  }
 });
 
 // Store connected users
@@ -74,8 +84,8 @@ io.on('connection', (socket) => {
 app.set('io', io);
 app.set('connectedUsers', connectedUsers);
 
-app.use(express.json({ limit: '50mb' }));  // Increased payload size limit for image uploads
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));  // Also for URL-encoded data
+app.use(express.json({ limit: '50mb' }));  
+app.use(express.urlencoded({ extended: true, limit: '50mb' })); 
 app.use(passport.initialize());
 
 // Add request logging middleware
@@ -83,19 +93,6 @@ app.use((req, res, next) => {
   const start = Date.now();
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   
-  // Log request headers and body
-  console.log('Headers:', req.headers);
-  if (req.body && Object.keys(req.body).length > 0) {
-    console.log('Body:', JSON.stringify(req.body, null, 2));
-  }
-
-  // Log response
-  const originalSend = res.send;
-  res.send = function(data) {
-    console.log(`Response [${res.statusCode}]:`, data);
-    return originalSend.apply(res, arguments);
-  };
-
   // Log request completion
   res.on('finish', () => {
     const duration = Date.now() - start;
@@ -142,3 +139,4 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/user'));
 app.use('/api/posts', require('./routes/post'));
 app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/chat', require('./routes/chat'));

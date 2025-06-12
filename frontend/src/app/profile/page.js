@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import EditProfileModal from "../components/EditProfileModal";
-import { FiEdit2, FiLogOut, FiCamera } from "react-icons/fi";
+import { FiEdit2, FiLogOut, FiCamera, FiHeart, FiMessageCircle, FiX } from "react-icons/fi";
 
 export default function Profile() {
   const [profile, setProfile] = useState(null);
@@ -11,6 +11,10 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState("posts");
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [showFollowers, setShowFollowers] = useState(false);
+  const [showFollowing, setShowFollowing] = useState(false);
+  const [followers, setFollowers] = useState([]);
+  const [following, setFollowing] = useState([]);
 
   useEffect(() => {
     fetchProfile();
@@ -113,144 +117,217 @@ export default function Profile() {
         {/* Profile Info */}
         <div className="flex-1 text-center md:text-left">
           <div className="flex flex-col md:flex-row md:items-center mb-4">
-            <h1 className="text-xl font-semibold mr-4">{profile.username}</h1>
-            <div className="flex mt-2 md:mt-0 justify-center md:justify-start">
-              <button 
-                onClick={handleEditProfile}
-                className="px-3 md:px-4 py-1.5 rounded transition-colors duration-300 mr-2 text-sm font-medium flex items-center"
-                style={{ 
-                  backgroundColor: 'transparent', 
-                  color: 'var(--foreground)',
-                  borderColor: 'var(--border-color)',
-                  borderWidth: '1px',
-                  borderStyle: 'solid'
-                }}
-              >
-                <FiEdit2 className="mr-1.5" size={14} />
-                Edit Profile
-              </button>
-              <button
-                onClick={handleLogout}
-                className="px-3 md:px-4 py-1.5 rounded transition-colors duration-300 text-sm font-medium flex items-center"
-                style={{ 
-                  backgroundColor: 'transparent', 
-                  color: 'var(--foreground)',
-                  borderColor: 'var(--border-color)',
-                  borderWidth: '1px',
-                  borderStyle: 'solid'
-                }}
-              >
-                <FiLogOut size={14} />
-              </button>
-            </div>
+            <h1 className="text-2xl font-bold mb-1 md:mb-0 md:mr-4">{profile.username}</h1>
+            
+            {/* Edit Profile Button */}
+            <button 
+              onClick={handleEditProfile}
+              className="px-6 py-2 rounded-lg font-medium bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200 flex items-center gap-2 mx-auto md:mx-0 mt-2 md:mt-0"
+            >
+              <FiEdit2 size={16} />
+              <span>Edit Profile</span>
+            </button>
           </div>
           
           {/* Stats */}
-          <div className="flex space-x-4 md:space-x-6 mb-4 justify-center md:justify-start text-sm md:text-base">
-            <div>
-              <span className="font-semibold">{profile.postsCount || 0}</span> posts
+          <div className="flex justify-center md:justify-start space-x-6 mb-4">
+            <div className="text-center">
+              <span className="font-bold">{profile.postsCount || 0}</span>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Posts</p>
             </div>
-            <div>
-              <span className="font-semibold">{profile.followersCount || 0}</span> followers
+            <div className="text-center cursor-pointer" onClick={() => setShowFollowers(true)}>
+              <span className="font-bold">{profile.followersCount || 0}</span>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Followers</p>
             </div>
-            <div>
-              <span className="font-semibold">{profile.followingCount || 0}</span> following
+            <div className="text-center cursor-pointer" onClick={() => setShowFollowing(true)}>
+              <span className="font-bold">{profile.followingCount || 0}</span>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Following</p>
             </div>
           </div>
           
           {/* Bio */}
-          <div className="mb-2">
-            <div className="font-semibold">{profile.fullName || profile.username}</div>
-            <p className="text-sm">
-              {profile.bio || "Welcome to my Moment profile! 📸 ✨"}
-            </p>
-            <p className="text-sm">
-              Joined: {new Date(profile.createdAt).toLocaleDateString()}
-            </p>
-          </div>
+          {profile.bio && (
+            <div className="mb-4 max-w-md">
+              <p className="text-sm whitespace-pre-wrap">{profile.bio}</p>
+            </div>
+          )}
+          
+          {/* Full Name */}
+          {profile.fullName && (
+            <div className="text-sm font-semibold mb-1">{profile.fullName}</div>
+          )}
+          
+          {/* Website */}
+          {profile.website && (
+            <div className="mb-4">
+              <a 
+                href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`}
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                {profile.website.replace(/^https?:\/\/(www\.)?/, '')}
+              </a>
+            </div>
+          )}
         </div>
       </div>
       
-      {/* Tab Navigation */}
-      <div className="border-t flex mb-2" style={{ borderColor: 'var(--border-color)' }}>
-        <button 
-          className={`flex-1 py-2 md:py-3 text-xs md:text-sm font-medium flex items-center justify-center ${activeTab === 'posts' ? 'border-t-2' : ''}`}
-          style={{ borderColor: activeTab === 'posts' ? 'var(--foreground)' : 'transparent' }}
-          onClick={() => setActiveTab('posts')}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 md:h-4 md:w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-          </svg>
-          POSTS
-        </button>
-        <button 
-          className={`flex-1 py-2 md:py-3 text-xs md:text-sm font-medium flex items-center justify-center ${activeTab === 'saved' ? 'border-t-2' : ''}`}
-          style={{ borderColor: activeTab === 'saved' ? 'var(--foreground)' : 'transparent' }}
-          onClick={() => setActiveTab('saved')}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 md:h-4 md:w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-          </svg>
-          SAVED
-        </button>
-        <button 
-          className={`flex-1 py-2 md:py-3 text-xs md:text-sm font-medium flex items-center justify-center ${activeTab === 'tagged' ? 'border-t-2' : ''}`}
-          style={{ borderColor: activeTab === 'tagged' ? 'var(--foreground)' : 'transparent' }}
-          onClick={() => setActiveTab('tagged')}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 md:h-4 md:w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-          </svg>
-          TAGGED
-        </button>
-      </div>
-      
-      {/* Photo Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-1 md:gap-4">
-        {activeTab === 'posts' && posts.length > 0 ? (
-          posts.map((post) => (
-            <div key={post.id} className="aspect-square bg-gray-100 dark:bg-gray-800 overflow-hidden relative group">
-              <img 
-                src={post.imageData || post.imageUrl} 
-                alt={`Post ${post.id}`}
-                className="w-full h-full object-cover transition-opacity group-hover:opacity-90"
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity flex items-center justify-center space-x-4 opacity-0 group-hover:opacity-100">
-                <div className="flex items-center text-white">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                  <span>{post.likesCount || 0}</span>
+      {/* Posts Grid */}
+      <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+        <h2 className="text-xl font-bold mb-4">Posts</h2>
+        
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 md:gap-4">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="aspect-square bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
+            ))}
+          </div>
+        ) : posts.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 md:gap-4">
+            {posts.map(post => (
+              <Link key={post._id} href={`/post/${post._id}`}>
+                <div className="aspect-square relative overflow-hidden bg-gray-100 dark:bg-gray-800">
+                  <img 
+                    src={post.imageData || post.imageUrl} 
+                    alt={post.caption || "Post"} 
+                    className="w-full h-full object-cover hover:opacity-90 transition-opacity"
+                  />
+                  
+                  <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 flex items-center justify-center opacity-0 hover:opacity-100 transition-all duration-200">
+                    <div className="flex space-x-4 text-white">
+                      <div className="flex items-center">
+                        <FiHeart className="mr-1" />
+                        <span>{post.likesCount || 0}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <FiMessageCircle className="mr-1" />
+                        <span>{post.commentsCount || 0}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center text-white">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                  <span>{post.commentsCount || 0}</span>
-                </div>
-              </div>
-            </div>
-          ))
-        ) : activeTab === 'posts' ? (
-          <div className="col-span-3 py-8 text-center text-gray-500 dark:text-gray-400">
-            <p className="mb-4">No posts yet.</p>
-            <Link
-              href="/post/new"
-              className="inline-block py-2 px-4 rounded transition-colors duration-300 text-white font-medium"
-              style={{ backgroundColor: 'var(--primary)' }}
-            >
-              Create your first post
-            </Link>
+              </Link>
+            ))}
           </div>
         ) : (
-          <div className="col-span-3 py-8 text-center text-gray-500 dark:text-gray-400">
-            {activeTab === 'saved' ? 'No saved posts.' : 'No tagged photos.'}
+          <div className="text-center py-10">
+            <div className="text-6xl mb-4">📷</div>
+            <h3 className="text-xl font-medium mb-2">No Posts Yet</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Share your first photo or video
+            </p>
+            <Link 
+              href="/post/new"
+              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              Create Post
+            </Link>
           </div>
         )}
       </div>
+      
+      {/* Followers Modal */}
+      {showFollowers && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-md max-h-[80vh] overflow-hidden">
+            <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold">Followers</h3>
+              <button onClick={() => setShowFollowers(false)} className="text-gray-500 hover:text-gray-700">
+                <FiX size={24} />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-4 max-h-[calc(80vh-80px)]">
+              {followers.length > 0 ? (
+                followers.map(follower => (
+                  <div key={follower._id} className="flex items-center justify-between py-2">
+                    <Link 
+                      href={`/profile/${follower.username}`}
+                      className="flex items-center"
+                      onClick={() => setShowFollowers(false)}
+                    >
+                      <img 
+                        src={follower.profilePic || `https://ui-avatars.com/api/?name=${follower.username}&background=random`} 
+                        alt={follower.username} 
+                        className="w-10 h-10 rounded-full object-cover mr-3"
+                      />
+                      <div>
+                        <div className="font-medium">{follower.username}</div>
+                        {follower.fullName && (
+                          <div className="text-sm text-gray-500 dark:text-gray-400">{follower.fullName}</div>
+                        )}
+                      </div>
+                    </Link>
+                    <button 
+                      onClick={() => handleFollowUser(follower._id, follower.isFollowing)}
+                      className={`px-4 py-1 rounded-full text-sm font-medium ${
+                        follower.isFollowing
+                          ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
+                          : 'bg-blue-500 text-white hover:bg-blue-600'
+                      }`}
+                    >
+                      {follower.isFollowing ? 'Following' : 'Follow'}
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No followers yet
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Following Modal */}
+      {showFollowing && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-md max-h-[80vh] overflow-hidden">
+            <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold">Following</h3>
+              <button onClick={() => setShowFollowing(false)} className="text-gray-500 hover:text-gray-700">
+                <FiX size={24} />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-4 max-h-[calc(80vh-80px)]">
+              {following.length > 0 ? (
+                following.map(user => (
+                  <div key={user._id} className="flex items-center justify-between py-2">
+                    <Link 
+                      href={`/profile/${user.username}`}
+                      className="flex items-center"
+                      onClick={() => setShowFollowing(false)}
+                    >
+                      <img 
+                        src={user.profilePic || `https://ui-avatars.com/api/?name=${user.username}&background=random`} 
+                        alt={user.username} 
+                        className="w-10 h-10 rounded-full object-cover mr-3"
+                      />
+                      <div>
+                        <div className="font-medium">{user.username}</div>
+                        {user.fullName && (
+                          <div className="text-sm text-gray-500 dark:text-gray-400">{user.fullName}</div>
+                        )}
+                      </div>
+                    </Link>
+                    <button 
+                      onClick={() => handleFollowUser(user._id, true)}
+                      className="px-4 py-1 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
+                    >
+                      Following
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  Not following anyone yet
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Edit Profile Modal */}
       <EditProfileModal

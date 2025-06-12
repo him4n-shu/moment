@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import { FiMenu, FiX, FiHome, FiUser, FiSettings, FiLogIn, FiLogOut, FiPlusSquare, FiMessageCircle, FiUsers, FiBell } from "react-icons/fi";
-import ThemeToggle from "./ThemeToggle";
 
 export default function MobileNavbar({ user, toggleMenu, isOpen }) {
   const handleLogout = () => {
@@ -13,7 +12,7 @@ export default function MobileNavbar({ user, toggleMenu, isOpen }) {
     <>
       {/* Top Navigation Bar */}
       <nav className="fixed top-0 left-0 right-0 z-10 shadow-md transition-colors duration-300" style={{ backgroundColor: 'var(--navbar-bg)', color: 'var(--navbar-text)', borderBottom: '1px solid var(--navbar-border)' }}>
-        <div className="flex justify-between items-center p-4">
+        <div className="flex justify-between items-center px-3 py-3">
           <Link href="/" className="text-xl font-bold" style={{ color: 'var(--primary)' }}>
             Moment
           </Link>
@@ -26,7 +25,7 @@ export default function MobileNavbar({ user, toggleMenu, isOpen }) {
                 )}
               </Link>
             )}
-            <button onClick={toggleMenu} className="p-2 text-gray-900 dark:text-white">
+            <button onClick={toggleMenu} className="p-2 text-gray-900 dark:text-white rounded-full hover:bg-gray-100">
               {isOpen ? <FiX size={24} /> : <FiMenu size={24} />}
             </button>
           </div>
@@ -34,8 +33,8 @@ export default function MobileNavbar({ user, toggleMenu, isOpen }) {
       </nav>
 
       {/* Mobile Menu */}
-      <div className={`fixed inset-0 z-50 bg-white dark:bg-gray-900 transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`} style={{ top: '64px' }}>
-        <div className="flex flex-col h-full p-4">
+      <div className={`fixed inset-0 z-50 bg-white dark:bg-gray-900 transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`} style={{ top: '60px' }}>
+        <div className="flex flex-col h-full p-4 overflow-y-auto pb-20">
           <div className="flex-1 space-y-4">
             {user ? (
               <>
@@ -49,7 +48,9 @@ export default function MobileNavbar({ user, toggleMenu, isOpen }) {
                   </div>
                   <div>
                     <div className="font-medium text-gray-900 dark:text-white">{user.username}</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">View profile</div>
+                    <Link href="/profile" className="text-sm text-gray-600 dark:text-gray-400 hover:underline">
+                      View profile
+                    </Link>
                   </div>
                 </div>
                 
@@ -114,11 +115,6 @@ export default function MobileNavbar({ user, toggleMenu, isOpen }) {
                 </Link>
               </>
             )}
-          </div>
-          
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
-            <div className="text-gray-800 dark:text-gray-200">Theme</div>
-            <ThemeToggle />
           </div>
         </div>
       </div>

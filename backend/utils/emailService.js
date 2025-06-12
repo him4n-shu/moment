@@ -1,19 +1,17 @@
 const nodemailer = require('nodemailer');
 
-// Create a transporter using Gmail
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 465,
-  secure: true, // use SSL
+  secure: true, 
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD
   },
-  debug: true, // Enable debug logs
-  logger: true // Enable logger
+  debug: true, 
+  logger: true 
 });
 
-// Function to send OTP email
 const sendOTPEmail = async (email, otp) => {
   try {
     // Log configuration before sending
