@@ -338,6 +338,10 @@ export default function SecuritySettings() {
           </button>
         </div>
       </div>
+
+      <div className="text-sm text-gray-500 dark:text-gray-400">
+        Change your password to keep your account secure
+      </div>
     </div>
   );
 } 

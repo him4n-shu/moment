@@ -172,10 +172,9 @@ export default function Register() {
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
             {step === 1 ? (
               <>
-                Already have an account?{' '}
-                <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
-                  Sign in
-                </Link>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  Already have an account? <Link href="/login" className="text-blue-500 hover:text-blue-600">Sign in</Link>
+                </div>
               </>
             ) : (
               'Enter the OTP sent to your email'

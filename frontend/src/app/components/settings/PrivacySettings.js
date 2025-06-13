@@ -24,9 +24,6 @@ export default function PrivacySettings() {
           window.location.href = "/login";
           return;
         }
-
-        // In a real app, you would fetch settings from the backend
-        // For now, we'll use localStorage to simulate settings persistence
         const savedSettings = localStorage.getItem("privacySettings");
         if (savedSettings) {
           setSettings(JSON.parse(savedSettings));
@@ -59,8 +56,6 @@ export default function PrivacySettings() {
     setMessage({ type: "", text: "" });
 
     try {
-      // In a real app, you would send these settings to the backend
-      // For now, we'll use localStorage to simulate settings persistence
       localStorage.setItem("privacySettings", JSON.stringify(settings));
       
       // Simulate API delay
@@ -112,9 +107,9 @@ export default function PrivacySettings() {
           <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
             <div>
               <h3 className="font-medium">Private Account</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
                 Only approved followers can see your posts and stories
-              </p>
+              </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -131,9 +126,9 @@ export default function PrivacySettings() {
           <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
             <div>
               <h3 className="font-medium">Show Online Status</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
                 Let others see when you're active on the platform
-              </p>
+              </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -150,9 +145,9 @@ export default function PrivacySettings() {
           <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
             <div>
               <h3 className="font-medium">Allow Tagging</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
                 Allow others to tag you in their posts and comments
-              </p>
+              </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -169,9 +164,9 @@ export default function PrivacySettings() {
           <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
             <div>
               <h3 className="font-medium">Show Activity</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
                 Show your likes, comments, and other activity to followers
-              </p>
+              </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -188,9 +183,9 @@ export default function PrivacySettings() {
           <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
             <div>
               <h3 className="font-medium">Allow Direct Messages</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
                 Allow others to send you direct messages
-              </p>
+              </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input

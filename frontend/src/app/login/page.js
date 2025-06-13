@@ -113,16 +113,9 @@ export default function Login() {
           {message}
         </p>
       )}
-      <p className="mt-4 text-center text-sm opacity-80">
-        Don't have an account?{" "}
-        <Link 
-          href="/register" 
-          className="transition-colors duration-300"
-          style={{ color: 'var(--primary)' }}
-        >
-          Register here
-        </Link>
-      </p>
+      <div className="text-sm text-gray-500 dark:text-gray-400">
+        Don&apos;t have an account? <Link href="/register" className="text-blue-500 hover:text-blue-600">Sign up</Link>
+      </div>
     </div>
   );
 } 
