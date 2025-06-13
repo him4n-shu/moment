@@ -87,7 +87,7 @@ export default function EditProfileModal({ profile, isOpen, onClose, onUpdate })
         ctx.drawImage(img, 0, 0, width, height);
         
         // Get the resized image as base64
-        const resizedImageBase64 = canvas.toDataURL(file.type, 0.8); // 0.8 quality to reduce size
+        const resizedImageBase64 = canvas.toDataURL(file.type, 0.8); 
         
         // Update state with resized image
         setPreviewImage(resizedImageBase64);
@@ -116,7 +116,7 @@ export default function EditProfileModal({ profile, isOpen, onClose, onUpdate })
         return;
       }
 
-      // Check if the profile picture is too large (greater than ~10MB when base64 encoded)
+      // Check if the profile picture is too large
       if (profilePic && profilePic.length > 10 * 1024 * 1024) {
         setError("Profile picture is too large. Please use an image smaller than 5MB");
         setIsSubmitting(false);
@@ -132,7 +132,7 @@ export default function EditProfileModal({ profile, isOpen, onClose, onUpdate })
         body: JSON.stringify({
           fullName,
           bio,
-          profilePic, // This is already base64 encoded
+          profilePic, 
         }),
       });
 

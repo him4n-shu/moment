@@ -22,7 +22,9 @@ const httpServer = createServer(app);
 
 // Configure CORS for both Express and Socket.IO
 const corsOptions = {
-  origin: "http://localhost:3000",
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.FRONTEND_URL 
+    : "http://localhost:3000",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true,
   allowedHeaders: ["Content-Type", "Authorization"]
@@ -33,7 +35,9 @@ app.use(cors(corsOptions));
 // Initialize Socket.IO with extended configuration
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: process.env.NODE_ENV === 'production'
+      ? process.env.FRONTEND_URL
+      : "http://localhost:3000",
     methods: ["GET", "POST"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"]
