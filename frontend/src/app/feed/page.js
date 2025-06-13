@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { FiHeart, FiMessageCircle, FiBookmark, FiClock, FiRefreshCw } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
 import Link from "next/link";
+import OptimizedImage from '../components/OptimizedImage';
 
 export default function Feed() {
   const [posts, setPosts] = useState([]);
@@ -346,10 +347,12 @@ export default function Feed() {
               {/* Post Header */}
               <div className="flex items-center p-3 border-b border-gray-200 dark:border-gray-700">
                 <Link href={`/profile/${post.user.username}`} className="flex items-center">
-                  <img 
-                    src={post.user.profilePic || `https://ui-avatars.com/api/?name=${post.user.username}&background=random`} 
-                    alt={post.user.username} 
-                    className="w-10 h-10 rounded-full object-cover"
+                  <OptimizedImage
+                    src={post.user.profilePic || '/default-avatar.png'}
+                    alt={post.user.username}
+                    width={40}
+                    height={40}
+                    className="w-10 h-10 rounded-full"
                   />
                   <div className="ml-3">
                     <div className="font-medium">{post.user.username}</div>
@@ -368,10 +371,12 @@ export default function Feed() {
               
               {/* Post Image */}
               <div className="relative">
-                <img 
-                  src={post.imageData || post.imageUrl} 
-                  alt={post.caption || "Post image"} 
-                  className="w-full h-auto max-h-[600px] object-contain bg-black"
+                <OptimizedImage
+                  src={post.imageData || post.imageUrl}
+                  alt={post.caption || "Post image"}
+                  width={800}
+                  height={600}
+                  className="w-full h-auto max-h-[600px] object-contain bg-black rounded-lg"
                 />
               </div>
               
@@ -465,10 +470,12 @@ export default function Feed() {
                       postComments[post._id].map((comment) => (
                         <div key={comment._id} className="flex items-start mb-3">
                           <Link href={`/profile/${comment.user.username}`} className="flex-shrink-0">
-                            <img 
-                              src={comment.user.profilePic || `https://ui-avatars.com/api/?name=${comment.user.username}&background=random`}
+                            <OptimizedImage
+                              src={comment.user.profilePic || '/default-avatar.png'}
                               alt={comment.user.username}
-                              className="w-8 h-8 rounded-full object-cover mr-2"
+                              width={32}
+                              height={32}
+                              className="w-8 h-8 rounded-full"
                             />
                           </Link>
                           <div className="flex-1 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2">

@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { FiSearch, FiX } from 'react-icons/fi';
+import OptimizedImage from './OptimizedImage';
 
 export default function SearchUsers() {
   const [query, setQuery] = useState('');
@@ -146,10 +147,12 @@ export default function SearchUsers() {
                 className="flex items-center flex-1"
                 onClick={() => setShowResults(false)}
               >
-                <img
-                  src={user.profilePic || '/default-avatar.png'}
+                <OptimizedImage
+                  src={user.profilePicture || '/default-avatar.png'}
                   alt={user.username}
-                  className="w-10 h-10 rounded-full object-cover"
+                  width={40}
+                  height={40}
+                  className="w-10 h-10 rounded-full"
                 />
                 <div className="ml-3">
                   <div className="font-medium">{user.username}</div>

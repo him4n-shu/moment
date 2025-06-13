@@ -5,6 +5,7 @@ import { useEffect, useState, useRef } from "react";
 import { FiHeart, FiMessageCircle, FiBookmark, FiClock, FiSmile, FiMoreHorizontal } from "react-icons/fi";
 import { FaHeart, FaRegPaperPlane } from "react-icons/fa";
 import EmojiPicker from 'emoji-picker-react';
+import OptimizedImage from './components/OptimizedImage';
 
 export default function Home() {
   const router = useRouter();
@@ -299,10 +300,12 @@ export default function Home() {
               {/* Post Header */}
               <div className="flex items-center p-4">
                 <Link href={`/profile/${post.user.username}`} className="flex items-center flex-1">
-                  <img
+                  <OptimizedImage
                     src={post.user.profilePic || '/default-avatar.png'}
                     alt={post.user.username}
-                    className="w-10 h-10 rounded-full object-cover"
+                    width={40}
+                    height={40}
+                    className="w-10 h-10 rounded-full"
                   />
                   <div className="ml-3">
                     <span className="font-semibold">{post.user.username}</span>
@@ -318,9 +321,11 @@ export default function Home() {
               
               {/* Post Image */}
               <div className="relative aspect-square w-full bg-black">
-                <img 
-                  src={post.imageData || post.imageUrl} 
-                  alt="Post" 
+                <OptimizedImage
+                  src={post.imageData || post.imageUrl}
+                  alt={post.caption}
+                  width={800}
+                  height={600}
                   className="w-full h-full object-contain"
                 />
               </div>
@@ -385,10 +390,12 @@ export default function Home() {
                     {post.comments.map(comment => (
                       <div key={comment._id} className="flex items-start space-x-2 mb-2">
                         <Link href={`/profile/${comment.user.username}`} className="flex-shrink-0">
-                          <img
+                          <OptimizedImage
                             src={comment.user.profilePic || '/default-avatar.png'}
                             alt={comment.user.username}
-                            className="w-6 h-6 rounded-full object-cover"
+                            width={32}
+                            height={32}
+                            className="w-8 h-8 rounded-full"
                           />
                         </Link>
                         <div className="flex-1">

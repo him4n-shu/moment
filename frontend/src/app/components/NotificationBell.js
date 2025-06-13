@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { FiBell } from 'react-icons/fi';
 import { io } from 'socket.io-client';
 import { playNotificationSound } from '../utils/notificationSound';
+import OptimizedImage from './OptimizedImage';
 
 export default function NotificationBell() {
   const [notifications, setNotifications] = useState([]);
@@ -198,10 +199,12 @@ export default function NotificationBell() {
                   }`}
                 >
                   <div className="flex items-start space-x-3">
-                    <img
-                      src={notification.sender.profilePic || '/default-avatar.png'}
-                      alt={notification.sender.username}
-                      className="w-10 h-10 rounded-full object-cover"
+                    <OptimizedImage
+                      src={notification.sender?.profilePicture || '/default-avatar.png'}
+                      alt={notification.sender?.username || 'User'}
+                      width={40}
+                      height={40}
+                      className="w-10 h-10 rounded-full"
                     />
                     <div className="flex-1">
                       <p className="text-sm text-gray-900 dark:text-gray-100">
@@ -214,10 +217,12 @@ export default function NotificationBell() {
                       </span>
                     </div>
                     {notification.post?.imageUrl && (
-                      <img
+                      <OptimizedImage
                         src={notification.post.imageUrl}
                         alt="Post"
-                        className="w-12 h-12 object-cover rounded"
+                        width={32}
+                        height={32}
+                        className="w-8 h-8 rounded-full"
                       />
                     )}
                   </div>

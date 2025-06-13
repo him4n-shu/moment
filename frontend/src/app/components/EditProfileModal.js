@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { FiX, FiImage, FiUser, FiInfo } from "react-icons/fi";
+import OptimizedImage from './OptimizedImage';
 
 export default function EditProfileModal({ profile, isOpen, onClose, onUpdate }) {
   const [fullName, setFullName] = useState("");
@@ -190,9 +191,11 @@ export default function EditProfileModal({ profile, isOpen, onClose, onUpdate })
               onClick={triggerFileInput}
             >
               {previewImage ? (
-                <img 
+                <OptimizedImage 
                   src={previewImage} 
                   alt="Profile preview" 
+                  width={96}
+                  height={96}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -249,6 +252,18 @@ export default function EditProfileModal({ profile, isOpen, onClose, onUpdate })
               placeholder="Write something about yourself..."
             ></textarea>
           </div>
+
+          {previewImage && (
+            <div className="mt-4">
+              <OptimizedImage
+                src={previewImage}
+                alt="Profile preview"
+                width={150}
+                height={150}
+                className="rounded-full mx-auto"
+              />
+            </div>
+          )}
 
           <div className="flex justify-end space-x-2 mt-6">
             <button

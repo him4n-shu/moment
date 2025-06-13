@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { FiSend, FiMoreVertical, FiSmile, FiChevronLeft, FiMenu, FiPlus, FiX, FiSearch } from 'react-icons/fi';
 import { useSocket } from '../contexts/SocketContext';
 import EmojiPicker from 'emoji-picker-react';
+import OptimizedImage from '../components/OptimizedImage';
 
 export default function MessagesPage() {
   const router = useRouter();
@@ -321,10 +322,12 @@ export default function MessagesPage() {
               }`}
             >
               <div className="flex items-center">
-                <img
+                <OptimizedImage
                   src={conv.participants[0].profilePic || '/default-avatar.png'}
                   alt={conv.participants[0].username}
-                  className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover"
+                  width={40}
+                  height={40}
+                  className="w-10 h-10 rounded-full"
                 />
                 <div className="ml-3 md:ml-4 flex-1">
                   <div className="font-medium">{conv.participants[0].username}</div>
@@ -370,10 +373,12 @@ export default function MessagesPage() {
               </button>
               <Link href={`/profile/${selectedConversation.participants[0].username}`}>
                 <div className="flex items-center">
-                  <img
+                  <OptimizedImage
                     src={selectedConversation.participants[0].profilePic || '/default-avatar.png'}
                     alt={selectedConversation.participants[0].username}
-                    className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover"
+                    width={40}
+                    height={40}
+                    className="w-10 h-10 rounded-full"
                   />
                   <div className="ml-2 md:ml-3 font-medium">
                     {selectedConversation.participants[0].username}
@@ -519,10 +524,12 @@ export default function MessagesPage() {
                 searchResults.map(user => (
                   <div key={user.id} className="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg flex items-center justify-between">
                     <div className="flex items-center">
-                      <img
+                      <OptimizedImage
                         src={user.profilePic || '/default-avatar.png'}
                         alt={user.username}
-                        className="w-10 h-10 rounded-full object-cover"
+                        width={40}
+                        height={40}
+                        className="w-10 h-10 rounded-full"
                       />
                       <div className="ml-3">
                         <div className="font-medium">{user.username}</div>

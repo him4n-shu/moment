@@ -305,7 +305,7 @@ export default function SecuritySettings() {
           <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
             <h4 className="font-medium mb-2">Login History</h4>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-              View your recent login activity and ensure that your account hasn't been compromised.
+              View your recent login activity and ensure that your account hasn&apos;t been compromised.
             </p>
             <button
               type="button"

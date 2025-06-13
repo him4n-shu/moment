@@ -127,7 +127,7 @@ export default function PrivacySettings() {
             <div>
               <h3 className="font-medium">Show Online Status</h3>
               <div className="text-sm text-gray-500 dark:text-gray-400">
-                Let others see when you're active on the platform
+                Let others see when you&apos;re active on the platform
               </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">

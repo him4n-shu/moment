@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { FiCamera, FiSave, FiAlertCircle } from "react-icons/fi";
+import OptimizedImage from '../OptimizedImage';
 
 export default function AccountSettings() {
   const [loading, setLoading] = useState(true);
@@ -155,10 +156,12 @@ export default function AccountSettings() {
           </label>
           <div className="flex items-center gap-4">
             <div className="relative">
-              <img
+              <OptimizedImage
                 src={formData.profilePic || "/default-avatar.png"}
                 alt={formData.username}
-                className="w-24 h-24 rounded-full object-cover"
+                width={150}
+                height={150}
+                className="w-32 h-32 rounded-full object-cover"
               />
               <label
                 htmlFor="profilePic"

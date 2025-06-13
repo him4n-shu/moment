@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import SearchUsers from "./SearchUsers";
@@ -37,60 +37,73 @@ export default function Navbar() {
     };
   }, []);
   
-  const fetchUserProfile = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
+  // Helper to get the correct profile picture URL
+  const getProfilePictureUrl = (user) => {
+    console.log('User object:', user); // Log the entire user object
     
-    setFetchError(false);
-    let retries = 0;
-    const maxRetries = 3;
-    
-    while (retries < maxRetries) {
-      try {
-        const response = await fetch("http://localhost:5000/api/users/profile", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        
-        if (!response.ok) {
-          if (response.status === 401) {
-            // Token invalid, redirect to login
-            localStorage.removeItem("token");
-            router.push('/login');
-            return;
-          }
-          throw new Error(`Server responded with ${response.status}`);
-        }
-        
-        const data = await response.json();
-        if (data && data.user) {
-          setUser(data.user);
-          // For demo purposes - set a random notification count
-          setNotificationCount(Math.floor(Math.random() * 5));
-          return; // Success, exit retry loop
-        }
-      } catch (err) {
-        console.error(`Error fetching user (attempt ${retries + 1}/${maxRetries}):`, err);
-        retries++;
-        
-        if (retries >= maxRetries) {
-          // Max retries reached, show error state
-          setFetchError(true);
-          // Check if network issue
-          if (!navigator.onLine || err.message === "Failed to fetch") {
-            setIsOffline(true);
-          }
-          return;
-        }
-        
-        // Wait before retry (exponential backoff)
-        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retries)));
-      }
+    // If no user or no profile picture, use a generated avatar
+    if (!user || (!user.profilePic && !user.profilePicture)) {
+      const fallbackUrl = `https://ui-avatars.com/api/?name=${user?.username || 'User'}&background=random&format=png`;
+      console.log('Using fallback URL:', fallbackUrl);
+      return fallbackUrl;
     }
+    
+    // Check both possible property names
+    const profilePic = user.profilePic || user.profilePicture;
+    console.log('Profile pic value:', profilePic);
+    
+    // If it's already an absolute URL, use it directly
+    if (profilePic.startsWith('http')) {
+      console.log('Using absolute URL:', profilePic);
+      return profilePic;
+    }
+    
+    // Otherwise, it's a relative path from the backend
+    // Make sure it has a leading slash
+    const path = profilePic.startsWith('/') ? profilePic : `/${profilePic}`;
+    const fullUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}${path}`;
+    console.log('Constructed URL:', fullUrl);
+    return fullUrl;
   };
   
+  const fetchUserProfile = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      console.log('Fetching user profile...');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/profile`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch profile');
+      }
+
+      const data = await response.json();
+      console.log('User profile data:', data); // Log the response to see its structure
+      // Support both { user: { ... } } and { ... } response shapes
+      const userData = data.user || data;
+      console.log('Processed user data:', userData);
+      setUser(userData);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchUserProfile();
-    
+  }, [fetchUserProfile]);
+
+  useEffect(() => {
+    if (user) {
+      fetchUserProfile();
+    }
+  }, [user, fetchUserProfile]);
+  
+  useEffect(() => {
     // Close dropdown when clicking outside
     const handleClickOutside = (event) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
@@ -161,10 +174,10 @@ export default function Navbar() {
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="flex text-sm rounded-full focus:outline-none"
                 >
-                  <img
-                    className="h-8 w-8 rounded-full object-cover"
-                    src={user?.profilePic || "/default-avatar.png"}
-                    alt="User profile"
+                  <img 
+                    src={user?.profilePic || user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.username || 'User'}&background=random&format=png`}
+                    alt={user?.username || "Profile"}
+                    className="w-10 h-10 rounded-full object-cover"
                   />
                 </button>
               </div>

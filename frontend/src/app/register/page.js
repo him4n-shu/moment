@@ -367,7 +367,7 @@ export default function Register() {
                   disabled={loading}
                   className="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
                 >
-                  Didn't receive the code? Resend OTP
+                  Didn&apos;t receive the code? Resend OTP
                 </button>
               </div>
             </div>

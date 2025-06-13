@@ -1,7 +1,8 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import OptimizedImage from '../components/OptimizedImage';
 
 export default function FriendsPage() {
   const router = useRouter();
@@ -11,26 +12,7 @@ export default function FriendsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    // Get tab from URL query parameter
-    const params = new URLSearchParams(window.location.search);
-    const tab = params.get('tab');
-    if (tab === 'followers' || tab === 'following') {
-      setActiveTab(tab);
-    }
-
-    fetchFriends();
-  }, []);
-
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-    // Update URL without reloading the page
-    const url = new URL(window.location);
-    url.searchParams.set('tab', tab);
-    window.history.pushState({}, '', url);
-  };
-
-  const fetchFriends = async () => {
+  const fetchFriends = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -75,6 +57,25 @@ export default function FriendsPage() {
     } finally {
       setLoading(false);
     }
+  }, [router]);
+
+  useEffect(() => {
+    // Get tab from URL query parameter
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    if (tab === 'followers' || tab === 'following') {
+      setActiveTab(tab);
+    }
+
+    fetchFriends();
+  }, [fetchFriends]);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    // Update URL without reloading the page
+    const url = new URL(window.location);
+    url.searchParams.set('tab', tab);
+    window.history.pushState({}, '', url);
   };
 
   const handleFollow = async (userId, isFollowing) => {
@@ -153,10 +154,12 @@ export default function FriendsPage() {
               href={`/profile/${user.username}`}
               className="flex items-center flex-1"
             >
-              <img
+              <OptimizedImage
                 src={user.profilePic || '/default-avatar.png'}
                 alt={user.username}
-                className="w-10 h-10 rounded-full object-cover"
+                width={40}
+                height={40}
+                className="w-10 h-10 rounded-full"
               />
               <div className="ml-3">
                 <div className="font-medium">{user.username}</div>

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import EditProfileModal from "../components/EditProfileModal";
 import { FiEdit2, FiLogOut, FiCamera, FiHeart, FiMessageCircle, FiX } from "react-icons/fi";
+import OptimizedImage from '../components/OptimizedImage';
 
 export default function Profile() {
   const [profile, setProfile] = useState(null);
@@ -99,9 +100,11 @@ export default function Profile() {
       <div className="flex flex-col md:flex-row items-center md:items-start mb-6 md:mb-8">
         {/* Profile Picture */}
         <div className="relative w-24 h-24 md:w-36 md:h-36 rounded-full overflow-hidden flex-shrink-0 mb-4 md:mb-0 md:mr-8 profile-picture-container">
-          <img 
-            src={profile.profilePic || `https://ui-avatars.com/api/?name=${profile.username}&background=random`} 
-            alt={profile.username} 
+          <OptimizedImage
+            src={profile.profilePic || `https://ui-avatars.com/api/?name=${profile.username}&background=random`}
+            alt={profile.username}
+            width={144}
+            height={144}
             className="w-full h-full object-cover"
           />
           <div 
@@ -188,9 +191,11 @@ export default function Profile() {
             {posts.map(post => (
               <Link key={post._id} href={`/post/${post._id}`}>
                 <div className="aspect-square relative overflow-hidden bg-gray-100 dark:bg-gray-800">
-                  <img 
-                    src={post.imageData || post.imageUrl} 
-                    alt={post.caption || "Post"} 
+                  <OptimizedImage
+                    src={post.imageData || post.imageUrl}
+                    alt={post.caption || "Post"}
+                    width={300}
+                    height={300}
                     className="w-full h-full object-cover hover:opacity-90 transition-opacity"
                   />
                   
@@ -246,10 +251,12 @@ export default function Profile() {
                       className="flex items-center"
                       onClick={() => setShowFollowers(false)}
                     >
-                      <img 
-                        src={follower.profilePic || `https://ui-avatars.com/api/?name=${follower.username}&background=random`} 
-                        alt={follower.username} 
-                        className="w-10 h-10 rounded-full object-cover mr-3"
+                      <OptimizedImage
+                        src={follower.profilePic || `https://ui-avatars.com/api/?name=${follower.username}&background=random`}
+                        alt={follower.username}
+                        width={32}
+                        height={32}
+                        className="w-8 h-8 rounded-full object-cover mr-3"
                       />
                       <div>
                         <div className="font-medium">{follower.username}</div>
@@ -299,10 +306,12 @@ export default function Profile() {
                       className="flex items-center"
                       onClick={() => setShowFollowing(false)}
                     >
-                      <img 
-                        src={user.profilePic || `https://ui-avatars.com/api/?name=${user.username}&background=random`} 
-                        alt={user.username} 
-                        className="w-10 h-10 rounded-full object-cover mr-3"
+                      <OptimizedImage
+                        src={user.profilePic || `https://ui-avatars.com/api/?name=${user.username}&background=random`}
+                        alt={user.username}
+                        width={32}
+                        height={32}
+                        className="w-8 h-8 rounded-full object-cover mr-3"
                       />
                       <div>
                         <div className="font-medium">{user.username}</div>

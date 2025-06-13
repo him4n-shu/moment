@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import OptimizedImage from '../components/OptimizedImage';
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -100,10 +101,12 @@ export default function Login() {
             borderStyle: 'solid'
           }}
         >
-          <img
-            src="https://www.google.com/favicon.ico"
-            alt="Google"
-            className="w-5 h-5 mr-2"
+          <OptimizedImage
+            src="/logo.png"
+            alt="Moment Logo"
+            width={120}
+            height={120}
+            className="w-30 h-30"
           />
           Login with Google
         </button>

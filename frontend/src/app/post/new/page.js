@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FiUpload, FiMapPin, FiX, FiImage } from "react-icons/fi";
+import OptimizedImage from '../../components/OptimizedImage';
 
 export default function CreatePost() {
   const router = useRouter();
@@ -261,10 +262,12 @@ export default function CreatePost() {
             ) : (
               <div className="relative">
                 <div className="aspect-square max-h-80 md:max-h-96 overflow-hidden rounded-lg">
-                  <img 
-                    src={preview} 
-                    alt="Preview" 
-                    className="w-full h-full object-cover"
+                  <OptimizedImage
+                    src={preview}
+                    alt="Post preview"
+                    width={800}
+                    height={600}
+                    className="max-h-[400px] w-auto mx-auto"
                   />
                 </div>
                 <button

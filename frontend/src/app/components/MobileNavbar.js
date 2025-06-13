@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { FiMenu, FiX, FiHome, FiUser, FiSettings, FiLogIn, FiLogOut, FiPlusSquare, FiMessageCircle, FiUsers, FiBell } from "react-icons/fi";
+import OptimizedImage from './OptimizedImage';
 
 export default function MobileNavbar({ user, toggleMenu, isOpen }) {
   const handleLogout = () => {
@@ -40,9 +41,11 @@ export default function MobileNavbar({ user, toggleMenu, isOpen }) {
               <>
                 <div className="flex items-center space-x-3 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
                   <div className="w-12 h-12 rounded-full overflow-hidden">
-                    <img 
+                    <OptimizedImage
                       src={user.profilePic || `https://ui-avatars.com/api/?name=${user.username}&background=random`} 
                       alt={user.username} 
+                      width={48}
+                      height={48}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -147,9 +150,11 @@ export default function MobileNavbar({ user, toggleMenu, isOpen }) {
             {user ? (
               <div className="flex flex-col items-center">
                 <div className="h-7 w-7 rounded-full overflow-hidden">
-                  <img 
+                  <OptimizedImage
                     src={user.profilePic || `https://ui-avatars.com/api/?name=${user.username}&background=random`} 
                     alt={user.username}
+                    width={32}
+                    height={32}
                     className="h-full w-full object-cover"
                   />
                 </div>

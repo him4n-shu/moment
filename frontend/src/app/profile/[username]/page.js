@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { FiGrid, FiHeart, FiMessageCircle, FiEdit2, FiCamera } from 'react-icons/fi';
 import EditProfileModal from '../../components/EditProfileModal';
 import Link from 'next/link';
+import OptimizedImage from '../../components/OptimizedImage';
 
 export default function UserProfile() {
   const { username } = useParams();
@@ -298,10 +299,12 @@ export default function UserProfile() {
       <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
         {/* Profile Picture with Edit Option */}
         <div className="relative">
-          <img
+          <OptimizedImage
             src={profile.profilePic || '/default-avatar.png'}
             alt={profile.username}
-            className="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
+            width={150}
+            height={150}
+            className="w-32 h-32 rounded-full"
           />
           {profile.isCurrentUser && (
             <div 
@@ -386,10 +389,12 @@ export default function UserProfile() {
           <div className="grid grid-cols-3 gap-1 md:gap-4">
             {profile.posts.map(post => (
               <div key={post.id} className="aspect-square relative group">
-                <img
-                  src={post.imageData || post.imageUrl}
+                <OptimizedImage
+                  src={post.imageUrl}
                   alt={post.caption}
-                  className="w-full h-full object-cover"
+                  width={300}
+                  height={300}
+                  className="w-full h-64 object-cover"
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
                   <div className="flex gap-6 text-white">
