@@ -18,6 +18,14 @@ const nextConfig = {
   },
   env: {
     NEXT_PUBLIC_BACKEND_URL: 'https://moment-backend-ykqv.onrender.com',
+    NEXT_PUBLIC_MAPBOX_TOKEN: process.env.NEXT_PUBLIC_MAPBOX_TOKEN,
+  },
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /\.css$/,
+      use: ['style-loader', 'css-loader'],
+    });
+    return config;
   },
 }
 

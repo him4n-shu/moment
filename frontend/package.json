@@ -14,17 +14,21 @@
     "@mui/material": "^5.15.10",
     "axios": "^1.6.7",
     "emoji-picker-react": "^4.5.12",
+    "mapbox-gl": "^3.1.2",
     "next": "14.1.0",
     "react": "^18",
     "react-dom": "^18",
     "react-icons": "^5.0.1",
+    "react-map-gl": "^7.1.7",
     "socket.io-client": "^4.7.4"
   },
   "devDependencies": {
     "autoprefixer": "^10.0.1",
+    "css-loader": "^6.10.0",
     "eslint": "^8",
     "eslint-config-next": "14.1.0",
     "postcss": "^8",
+    "style-loader": "^3.3.4",
     "tailwindcss": "^3.3.0"
   }
 }
