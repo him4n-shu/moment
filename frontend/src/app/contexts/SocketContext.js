@@ -18,12 +18,12 @@ export function SocketProvider({ children }) {
     // Initialize socket connection with auth token
     const newSocket = io(backendUrl, {
       auth: { token },
-      transports: ['polling', 'websocket'],
+      transports: ['websocket', 'polling'],
       reconnection: true,
-      reconnectionAttempts: Infinity,
+      reconnectionAttempts: 5,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      timeout: 20000,
+      timeout: 10000,
       autoConnect: true,
       path: '/socket.io/',
       withCredentials: true,
@@ -53,12 +53,38 @@ export function SocketProvider({ children }) {
         return;
       }
 
-      // For other errors, implement exponential backoff
-      const retryDelay = Math.min(1000 * Math.pow(2, newSocket.reconnectAttempts || 0), 10000);
-      console.log(`Attempting to reconnect in ${retryDelay}ms...`);
-      setTimeout(() => {
-        newSocket.connect();
-      }, retryDelay);
+      // Handle timeout specifically
+      if (error.message.includes('timeout')) {
+        console.log('Connection timeout, checking server availability...');
+        // Try to ping the server to check if it's reachable
+        fetch(`${backendUrl}/health`)
+          .then(response => {
+            if (response.ok) {
+              console.log('Server is reachable, attempting to reconnect...');
+              newSocket.connect();
+            } else {
+              console.error('Server is not responding properly');
+            }
+          })
+          .catch(() => {
+            console.error('Server is not reachable');
+          });
+        return;
+      }
+
+      // For other errors, implement exponential backoff with max retries
+      const maxRetries = 5;
+      const currentAttempt = newSocket.reconnectAttempts || 0;
+      
+      if (currentAttempt < maxRetries) {
+        const retryDelay = Math.min(1000 * Math.pow(2, currentAttempt), 10000);
+        console.log(`Attempt ${currentAttempt + 1}/${maxRetries}: Reconnecting in ${retryDelay}ms...`);
+        setTimeout(() => {
+          newSocket.connect();
+        }, retryDelay);
+      } else {
+        console.error('Max reconnection attempts reached. Please refresh the page.');
+      }
     });
 
     newSocket.on('disconnect', (reason) => {
