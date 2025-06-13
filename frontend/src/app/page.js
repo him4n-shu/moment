@@ -430,6 +430,7 @@ export default function Home() {
                       style={{ filter: 'drop-shadow(0 4px 3px rgb(0 0 0 / 0.07)) drop-shadow(0 2px 2px rgb(0 0 0 / 0.06))' }}
                     >
                       <EmojiPicker
+                        key={`emoji-picker-${post._id}`}
                         onEmojiClick={(emojiData) => handleEmojiClick(post._id, emojiData)}
                         width={300}
                         height={400}
