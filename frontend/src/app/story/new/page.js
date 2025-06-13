@@ -1,13 +1,9 @@
 "use client";
 import { useState, useRef, useCallback } from "react";
-import { useRouter } from 'next/navigation';
 import dynamic from "next/dynamic";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-const Map = dynamic(() => import("react-map-gl"), {
-  ssr: false,
-  loading: () => <div>Loading map...</div>
-});
+const Map = dynamic(() => import("react-map-gl").then(mod => mod.default), { ssr: false });
 const Marker = dynamic(() => import("react-map-gl").then(mod => mod.Marker), { ssr: false });
 
 const MAPBOX_TOKEN = "pk.eyJ1IjoiaGltNG5zaHUiLCJhIjoiY21iYmQ4cjk0MHYwYzJscHY1Ymg0d3o5MSJ9.te_0FascQG8XXYPOVwJC5A";

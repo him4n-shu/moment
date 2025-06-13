@@ -18,9 +18,7 @@ const nextConfig = {
   },
   env: {
     NEXT_PUBLIC_BACKEND_URL: 'https://moment-backend-ykqv.onrender.com',
-    NEXT_PUBLIC_MAPBOX_TOKEN: process.env.NEXT_PUBLIC_MAPBOX_TOKEN,
   },
-  transpilePackages: ['react-map-gl', 'mapbox-gl']
 }
 
 export default nextConfig
