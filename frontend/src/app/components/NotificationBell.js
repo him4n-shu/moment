@@ -15,8 +15,11 @@ export default function NotificationBell() {
     const token = localStorage.getItem('token');
     if (!token) return;
 
+    // Get the backend URL from environment variable or fallback to localhost
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+
     // Connect to Socket.IO server
-    const socketInstance = io('http://localhost:5000', {
+    const socketInstance = io(backendUrl, {
       auth: { token }
     });
 

@@ -12,8 +12,11 @@ export function SocketProvider({ children }) {
     const token = localStorage.getItem('token');
     if (!token) return;
 
+    // Get the backend URL from environment variable or fallback to localhost
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+
     // Initialize socket connection with auth token
-    const newSocket = io('http://localhost:5000', {
+    const newSocket = io(backendUrl, {
       auth: { token },
       transports: ['polling', 'websocket'],
       reconnection: true,
