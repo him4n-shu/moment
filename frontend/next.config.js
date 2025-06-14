@@ -1,10 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: [
-      'moment-backend-ykqv.onrender.com',
-      'localhost',
-      'ui-avatars.com'
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'moment-backend-ykqv.onrender.com',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ui-avatars.com',
+      },
     ],
   },
   env: {
