@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FiArrowLeft } from 'react-icons/fi';
 import OptimizedImage from '../components/OptimizedImage';
+import { getApiUrl } from '@/utils/api';
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
@@ -12,14 +13,15 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     const fetchNotifications = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        router.push('/login');
-        return;
-      }
-
+      setLoading(true);
       try {
-        const response = await fetch('http://localhost:5000/api/notifications', {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          router.push('/login');
+          return;
+        }
+
+        const response = await fetch(getApiUrl('api/notifications'), {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -53,7 +55,7 @@ export default function NotificationsPage() {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await fetch(`http://localhost:5000/api/notifications/${notificationId}/read`, {
+      const response = await fetch(getApiUrl(`api/notifications/${notificationId}/read`), {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`
@@ -79,7 +81,7 @@ export default function NotificationsPage() {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await fetch('http://localhost:5000/api/notifications/read-all', {
+      const response = await fetch(getApiUrl('api/notifications/read-all'), {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`

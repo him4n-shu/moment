@@ -1,10 +1,13 @@
 "use client";
 import { useState } from "react";
 import { FiSave, FiAlertCircle, FiEye, FiEyeOff } from "react-icons/fi";
+import { getApiUrl } from '@/utils/api';
+import { useRouter } from "next/navigation";
 
 export default function SecuritySettings() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const router = useRouter();
   
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -83,30 +86,33 @@ export default function SecuritySettings() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Reset states
+    setMessage({ type: "", text: "" });
+    setLoading(true);
+    
+    // Validate inputs
     if (!validateForm()) {
+      setLoading(false);
       return;
     }
     
-    setLoading(true);
-    setMessage({ type: "", text: "" });
-
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        window.location.href = "/login";
+        router.push("/login");
         return;
       }
-
-      const response = await fetch("http://localhost:5000/api/auth/change-password", {
-        method: "PUT",
+      
+      const response = await fetch(getApiUrl("api/auth/change-password"), {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
           currentPassword: passwordData.currentPassword,
-          newPassword: passwordData.newPassword,
-        }),
+          newPassword: passwordData.newPassword
+        })
       });
 
       const data = await response.json();

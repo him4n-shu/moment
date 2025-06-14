@@ -6,6 +6,7 @@ import { FiHeart, FiMessageCircle, FiBookmark, FiClock, FiSmile, FiMoreHorizonta
 import { FaHeart, FaRegPaperPlane } from "react-icons/fa";
 import EmojiPicker from 'emoji-picker-react';
 import OptimizedImage from './components/OptimizedImage';
+import { getApiUrl } from '@/utils/api';
 
 export default function Home() {
   const router = useRouter();
@@ -34,7 +35,7 @@ export default function Home() {
       
       try {
         // Fetch user profile
-        const profileRes = await fetch("http://localhost:5000/api/users/profile", {
+        const profileRes = await fetch(getApiUrl("api/users/profile"), {
           headers: { Authorization: `Bearer ${token}` },
         });
         
@@ -52,7 +53,7 @@ export default function Home() {
         setUser(profileData.user);
         
         // Fetch posts
-        const postsRes = await fetch("http://localhost:5000/api/posts/feed", {
+        const postsRes = await fetch(getApiUrl("api/posts/feed"), {
           headers: { Authorization: `Bearer ${token}` },
         });
         
@@ -118,7 +119,7 @@ export default function Home() {
     setLikeErrors(prev => ({ ...prev, [postId]: null }));
 
     try {
-      const response = await fetch(`http://localhost:5000/api/posts/${postId}/like`, {
+      const response = await fetch(getApiUrl(`api/posts/${postId}/like`), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -170,7 +171,7 @@ export default function Home() {
     setCommentErrors(prev => ({ ...prev, [postId]: null }));
 
     try {
-      const response = await fetch(`http://localhost:5000/api/posts/${postId}/comment`, {
+      const response = await fetch(getApiUrl(`api/posts/${postId}/comment`), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

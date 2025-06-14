@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { FiSearch, FiX } from 'react-icons/fi';
 import OptimizedImage from './OptimizedImage';
+import { getApiUrl } from '@/utils/api';
 
 export default function SearchUsers() {
   const [query, setQuery] = useState('');
@@ -36,8 +37,12 @@ export default function SearchUsers() {
 
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:5000/api/users/search?query=${encodeURIComponent(query)}`, {
-          headers: { Authorization: `Bearer ${token}` }
+        if (!token) return;
+
+        const response = await fetch(getApiUrl(`api/users/search?query=${encodeURIComponent(query)}`), {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         });
 
         if (!response.ok) {
@@ -62,10 +67,12 @@ export default function SearchUsers() {
   const handleFollow = async (userId, isFollowing) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/users/follow/${userId}`, {
+      if (!token) return;
+
+      const response = await fetch(getApiUrl(`api/users/follow/${userId}`), {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import OptimizedImage from '../components/OptimizedImage';
+import { getApiUrl } from '@/utils/api';
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -15,7 +16,7 @@ export default function Login() {
     e.preventDefault();
     setMessage("");
     try {
-      const res = await fetch("http://localhost:5000/api/auth/login", {
+      const res = await fetch(getApiUrl("api/auth/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -36,7 +37,7 @@ export default function Login() {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:5000/api/auth/google";
+    window.location.href = getApiUrl("api/auth/google");
   };
 
   return (

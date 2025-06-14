@@ -4,6 +4,7 @@ import { FiHeart, FiMessageCircle, FiBookmark, FiClock, FiRefreshCw } from "reac
 import { FaHeart } from "react-icons/fa";
 import Link from "next/link";
 import OptimizedImage from '../components/OptimizedImage';
+import { getApiUrl } from '@/utils/api';
 
 export default function Feed() {
   const [posts, setPosts] = useState([]);
@@ -43,7 +44,7 @@ export default function Feed() {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/posts/feed", {
+      const response = await fetch(getApiUrl("api/posts/feed"), {
         headers: { 
           Authorization: `Bearer ${token}` 
         }
@@ -89,7 +90,7 @@ export default function Feed() {
     setCommentErrors(prev => ({ ...prev, [postId]: null }));
 
     try {
-      const response = await fetch(`http://localhost:5000/api/posts/${postId}`, {
+      const response = await fetch(getApiUrl(`api/posts/${postId}`), {
         headers: { 
           Authorization: `Bearer ${token}`
         }
@@ -130,7 +131,7 @@ export default function Feed() {
 
     try {
       // Make the API call first without optimistic update
-      const response = await fetch(`http://localhost:5000/api/posts/${postId}/like`, {
+      const response = await fetch(getApiUrl(`api/posts/${postId}/like`), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -182,7 +183,7 @@ export default function Feed() {
     setCommentErrors(prev => ({ ...prev, [postId]: null }));
 
     try {
-      const response = await fetch(`http://localhost:5000/api/posts/${postId}/comment`, {
+      const response = await fetch(getApiUrl(`api/posts/${postId}/comment`), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

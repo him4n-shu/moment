@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { FiCamera, FiSave, FiAlertCircle } from "react-icons/fi";
 import OptimizedImage from '../OptimizedImage';
+import { getApiUrl } from '@/utils/api';
 
 export default function AccountSettings() {
   const [loading, setLoading] = useState(true);
@@ -18,7 +19,7 @@ export default function AccountSettings() {
 
   // Load user data
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchUserProfile = async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
@@ -26,7 +27,7 @@ export default function AccountSettings() {
           return;
         }
 
-        const response = await fetch("http://localhost:5000/api/users/profile", {
+        const response = await fetch(getApiUrl("api/users/profile"), {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -54,7 +55,7 @@ export default function AccountSettings() {
       }
     };
 
-    fetchProfile();
+    fetchUserProfile();
   }, []);
 
   const handleChange = (e) => {
@@ -89,15 +90,24 @@ export default function AccountSettings() {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:5000/api/users/profile", {
+      if (!token) {
+        window.location.href = "/login";
+        return;
+      }
+
+      const response = await fetch(getApiUrl("api/users/profile"), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          fullName: formData.fullName,
+          username: formData.username,
+          email: formData.email,
           bio: formData.bio,
+          website: formData.website,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
           profilePic: formData.profilePic,
         }),
       });

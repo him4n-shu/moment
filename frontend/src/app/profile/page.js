@@ -4,6 +4,7 @@ import Link from "next/link";
 import EditProfileModal from "../components/EditProfileModal";
 import { FiEdit2, FiLogOut, FiCamera, FiHeart, FiMessageCircle, FiX } from "react-icons/fi";
 import OptimizedImage from '../components/OptimizedImage';
+import { getApiUrl } from '@/utils/api';
 
 export default function Profile() {
   const [profile, setProfile] = useState(null);
@@ -48,7 +49,7 @@ export default function Profile() {
       return;
     }
     try {
-      const res = await fetch("http://localhost:5000/api/users/profile", {
+      const res = await fetch(getApiUrl("api/users/profile"), {
         headers: { Authorization: `Bearer ${token}` },
       });
       

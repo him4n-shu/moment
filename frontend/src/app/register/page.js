@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { getApiUrl } from '@/utils/api';
 
 export default function Register() {
   const router = useRouter();
@@ -65,7 +66,7 @@ export default function Register() {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register/init', {
+      const response = await fetch(getApiUrl('api/auth/register/init'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -106,7 +107,7 @@ export default function Register() {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register/verify', {
+      const response = await fetch(getApiUrl('api/auth/register/verify'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -140,7 +141,7 @@ export default function Register() {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register/resend-otp', {
+      const response = await fetch(getApiUrl('api/auth/register/resend-otp'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

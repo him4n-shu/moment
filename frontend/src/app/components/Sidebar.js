@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { FiWifiOff } from "react-icons/fi";
+import { getApiUrl } from '@/utils/api';
 
 export default function Sidebar() {
   const [user, setUser] = useState(null);
@@ -34,7 +35,7 @@ export default function Sidebar() {
         
         while (retries < maxRetries) {
           try {
-            const response = await fetch("http://localhost:5000/api/users/profile", {
+            const response = await fetch(getApiUrl("api/users/profile"), {
               headers: { Authorization: `Bearer ${token}` },
             });
             

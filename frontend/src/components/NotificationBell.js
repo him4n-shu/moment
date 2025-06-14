@@ -3,6 +3,7 @@ import { FiBell } from 'react-icons/fi';
 import { io } from 'socket.io-client';
 import { playNotificationSound } from '../utils/notificationSound';
 import OptimizedImage from '../app/components/OptimizedImage';
+import { getApiUrl, API_BASE_URL } from '../utils/api';
 
 export default function NotificationBell() {
   const [notifications, setNotifications] = useState([]);
@@ -17,7 +18,7 @@ export default function NotificationBell() {
     if (!token) return;
 
     // Connect to Socket.IO server
-    const socketInstance = io('http://localhost:5000', {
+    const socketInstance = io(API_BASE_URL, {
       auth: { token }
     });
 
@@ -62,7 +63,7 @@ export default function NotificationBell() {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await fetch('http://localhost:5000/api/notifications', {
+      const response = await fetch(getApiUrl('api/notifications'), {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -85,7 +86,7 @@ export default function NotificationBell() {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await fetch(`http://localhost:5000/api/notifications/${notificationId}/read`, {
+      const response = await fetch(getApiUrl(`api/notifications/${notificationId}/read`), {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`
@@ -112,7 +113,7 @@ export default function NotificationBell() {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await fetch('http://localhost:5000/api/notifications/read-all', {
+      const response = await fetch(getApiUrl('api/notifications/read-all'), {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`

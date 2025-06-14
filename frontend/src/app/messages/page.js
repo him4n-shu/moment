@@ -6,6 +6,7 @@ import { FiSend, FiMoreVertical, FiSmile, FiChevronLeft, FiMenu, FiPlus, FiX, Fi
 import { useSocket } from '../contexts/SocketContext';
 import EmojiPicker from 'emoji-picker-react';
 import OptimizedImage from '../components/OptimizedImage';
+import { getApiUrl } from '@/utils/api';
 
 export default function MessagesPage() {
   const router = useRouter();
@@ -34,7 +35,7 @@ export default function MessagesPage() {
         return;
       }
 
-      const response = await fetch('http://localhost:5000/api/chat/conversations', {
+      const response = await fetch(getApiUrl('api/chat/conversations'), {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -55,7 +56,9 @@ export default function MessagesPage() {
   const fetchMessages = useCallback(async (conversationId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/chat/messages/${conversationId}`, {
+      if (!token) return;
+
+      const response = await fetch(getApiUrl(`api/chat/messages/${conversationId}`), {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -173,17 +176,30 @@ export default function MessagesPage() {
     e.preventDefault();
     if (!newMessage.trim() || !selectedConversation) return;
 
+    const tempMessage = {
+      _id: `temp-${Date.now()}`,
+      content: newMessage,
+      sender: { _id: user._id },
+      createdAt: new Date().toISOString(),
+      isTemp: true
+    };
+
+    setMessages(prev => [...prev, tempMessage]);
+    setNewMessage('');
+
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/chat/messages', {
+      if (!token) return;
+
+      const response = await fetch(getApiUrl('api/chat/messages'), {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          conversationId: selectedConversation.id,
-          content: newMessage
+          conversationId: selectedConversation._id,
+          content: tempMessage.content
         })
       });
 
@@ -193,9 +209,6 @@ export default function MessagesPage() {
 
       const data = await response.json();
       setMessages(prev => [...prev, data.message]);
-      setNewMessage('');
-      // Hide emoji picker after sending
-      setShowEmojiPicker(false);
     } catch (error) {
       console.error('Error sending message:', error);
       setError(error.message);
@@ -220,7 +233,9 @@ export default function MessagesPage() {
     setSearchLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/users/search?query=${encodeURIComponent(searchQuery)}`, {
+      if (!token) return;
+
+      const response = await fetch(getApiUrl(`api/users/search?query=${encodeURIComponent(searchQuery)}`), {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -240,11 +255,13 @@ export default function MessagesPage() {
   const startNewConversation = async (userId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/chat/conversations', {
+      if (!token) return;
+
+      const response = await fetch(getApiUrl('api/chat/conversations'), {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ userId })
       });

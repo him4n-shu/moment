@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import OptimizedImage from '../components/OptimizedImage';
+import { getApiUrl } from '@/utils/api';
 
 export default function FriendsPage() {
   const router = useRouter();
@@ -21,7 +22,7 @@ export default function FriendsPage() {
       }
 
       // Get current user's profile to get their ID
-      const profileRes = await fetch('http://localhost:5000/api/users/profile', {
+      const profileRes = await fetch(getApiUrl('api/users/profile'), {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -34,10 +35,10 @@ export default function FriendsPage() {
 
       // Fetch followers and following in parallel
       const [followersRes, followingRes] = await Promise.all([
-        fetch(`http://localhost:5000/api/users/followers/${userId}`, {
+        fetch(getApiUrl(`api/users/followers/${userId}`), {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        fetch(`http://localhost:5000/api/users/following/${userId}`, {
+        fetch(getApiUrl(`api/users/following/${userId}`), {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -81,10 +82,15 @@ export default function FriendsPage() {
   const handleFollow = async (userId, isFollowing) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/users/follow/${userId}`, {
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+      
+      const response = await fetch(getApiUrl(`api/users/follow/${userId}`), {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });

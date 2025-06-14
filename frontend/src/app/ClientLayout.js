@@ -5,6 +5,7 @@ import MobileNavbar from "./components/MobileNavbar";
 import Navbar from "./components/Navbar";
 import { SocketProvider } from "./contexts/SocketContext";
 import { FiWifiOff } from "react-icons/fi";
+import { getApiUrl } from '@/utils/api';
 
 export default function ClientLayout({ children }) {
   const [mounted, setMounted] = useState(false);
@@ -41,7 +42,7 @@ export default function ClientLayout({ children }) {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/users/profile", {
+      const response = await fetch(getApiUrl("api/users/profile"), {
         headers: { Authorization: `Bearer ${token}` },
       });
       

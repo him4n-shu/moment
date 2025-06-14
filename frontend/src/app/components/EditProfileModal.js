@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { FiX, FiImage, FiUser, FiInfo } from "react-icons/fi";
 import OptimizedImage from './OptimizedImage';
+import { getApiUrl } from '@/utils/api';
 
 export default function EditProfileModal({ profile, isOpen, onClose, onUpdate }) {
   const [fullName, setFullName] = useState("");
@@ -124,17 +125,25 @@ export default function EditProfileModal({ profile, isOpen, onClose, onUpdate })
         return;
       }
 
-      const response = await fetch("http://localhost:5000/api/users/profile", {
+      // Create FormData object for multipart/form-data submission
+      const formData = new FormData();
+      formData.append("username", profile.username);
+      formData.append("bio", profile.bio || "");
+      formData.append("website", profile.website || "");
+      formData.append("firstName", profile.firstName || "");
+      formData.append("lastName", profile.lastName || "");
+      
+      // Only append profilePicture if a new one was selected
+      if (profilePic && profilePic !== profile.profilePic) {
+        formData.append("profilePicture", profilePic);
+      }
+      
+      const response = await fetch(getApiUrl("api/users/profile"), {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({
-          fullName,
-          bio,
-          profilePic, 
-        }),
+        body: formData
       });
 
       if (!response.ok) {

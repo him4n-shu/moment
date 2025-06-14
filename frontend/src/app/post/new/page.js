@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FiUpload, FiMapPin, FiX, FiImage } from "react-icons/fi";
 import OptimizedImage from '../../components/OptimizedImage';
+import { getApiUrl } from '@/utils/api';
 
 export default function CreatePost() {
   const router = useRouter();
@@ -29,7 +30,7 @@ export default function CreatePost() {
       }
 
       try {
-        const res = await fetch("http://localhost:5000/api/users/profile", {
+        const res = await fetch(getApiUrl("api/users/profile"), {
           headers: { Authorization: `Bearer ${token}` },
         });
         
@@ -175,7 +176,7 @@ export default function CreatePost() {
       // Get base64 string from the preview
       const imageData = preview;
       
-      const response = await fetch("http://localhost:5000/api/posts", {
+      const response = await fetch(getApiUrl("api/posts"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

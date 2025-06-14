@@ -5,6 +5,7 @@ import { FiGrid, FiHeart, FiMessageCircle, FiEdit2, FiCamera } from 'react-icons
 import EditProfileModal from '../../components/EditProfileModal';
 import Link from 'next/link';
 import OptimizedImage from '../../components/OptimizedImage';
+import { getApiUrl } from '@/utils/api';
 
 export default function UserProfile() {
   const { username } = useParams();
@@ -33,7 +34,7 @@ export default function UserProfile() {
           return;
         }
 
-        const response = await fetch(`http://localhost:5000/api/users/profile/${encodeURIComponent(username)}`, {
+        const response = await fetch(getApiUrl(`api/users/profile/${encodeURIComponent(username)}`), {
           headers: { 
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -115,7 +116,7 @@ export default function UserProfile() {
 
       while (retryCount < maxRetries) {
         try {
-          const response = await fetch(`http://localhost:5000/api/users/follow/${userId}`, {
+          const response = await fetch(getApiUrl(`api/users/follow/${userId}`), {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -230,15 +231,13 @@ export default function UserProfile() {
   const handleStartChat = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/chat/conversations', {
+      const response = await fetch(getApiUrl(`api/chat/conversations`), {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          userId: profile._id
-        })
+        body: JSON.stringify({ userId: profile._id })
       });
 
       if (!response.ok) {
