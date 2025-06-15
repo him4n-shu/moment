@@ -3,15 +3,29 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
 export default function OptimizedImage({ src, alt, width, height, className, ...props }) {
+  // Debug logging
+  useEffect(() => {
+    if (src && typeof src === 'string') {
+      console.log(`OptimizedImage for ${alt || 'unknown'}: ${src.substring(0, 50)}...`);
+      
+      if (src.startsWith('data:')) {
+        console.log(`Base64 image detected for ${alt || 'unknown'}`);
+      }
+    }
+  }, [src, alt]);
+
   // Check if src is a default path like '/default-avatar.png'
   const isLocalPath = src && typeof src === 'string' && src.startsWith('/') && !src.startsWith('//');
+  
+  // Check if src is a base64 image
+  const isBase64 = src && typeof src === 'string' && src.startsWith('data:');
   
   // Initialize with the correct source
   const [imgSrc, setImgSrc] = useState(src);
   const [imgError, setImgError] = useState(false);
   
-  // Use regular img tag for local images
-  if (isLocalPath) {
+  // Use regular img tag for local images and base64 images
+  if (isLocalPath || isBase64) {
     return (
       <img
         src={src}
@@ -19,6 +33,11 @@ export default function OptimizedImage({ src, alt, width, height, className, ...
         width={width}
         height={height}
         className={className}
+        onError={(e) => {
+          console.log('Image failed to load (img tag):', src?.substring(0, 50));
+          e.target.onerror = null;
+          e.target.src = `https://ui-avatars.com/api/?name=${alt || 'User'}&background=random&format=png`;
+        }}
         {...props}
       />
     );
@@ -26,7 +45,7 @@ export default function OptimizedImage({ src, alt, width, height, className, ...
   
   // For remote images, use Next.js Image with error handling
   const handleError = () => {
-    console.log('Image failed to load:', src);
+    console.log('Image failed to load (Next.js Image):', src?.substring(0, 50));
     if (!imgError) {
       // Generate a UI avatar as fallback
       const fallbackSrc = `https://ui-avatars.com/api/?name=${alt || 'User'}&background=random&format=png`;

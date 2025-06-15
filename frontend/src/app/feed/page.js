@@ -372,12 +372,15 @@ export default function Feed() {
               
               {/* Post Image */}
               <div className="relative">
-                <OptimizedImage
-                  src={post.imageData || post.imageUrl}
+                <img
+                  src={post.imageData || post.imageUrl || `https://ui-avatars.com/api/?name=${post.caption || 'Post'}&background=random&format=png`}
                   alt={post.caption || "Post image"}
-                  width={800}
-                  height={600}
                   className="w-full h-auto max-h-[600px] object-contain bg-black rounded-lg"
+                  onError={(e) => {
+                    console.error("Image failed to load:", post.imageUrl);
+                    e.target.onerror = null;
+                    e.target.src = `https://ui-avatars.com/api/?name=${post.caption || 'Post'}&background=random&format=png`;
+                  }}
                 />
               </div>
               

@@ -17,20 +17,23 @@ export default function Profile() {
   const [showFollowing, setShowFollowing] = useState(false);
   const [followers, setFollowers] = useState([]);
   const [following, setFollowing] = useState([]);
-  const isMounted = useRef(true);
-  const profileFetched = useRef(false);
+  const fetchedRef = useRef(false);
+  const abortControllerRef = useRef(null);
 
   useEffect(() => {
-    // Only fetch profile if we haven't already
-    if (!profileFetched.current) {
+    // Only fetch profile once when component mounts
+    if (!fetchedRef.current) {
       fetchProfile();
-      profileFetched.current = true;
+      fetchedRef.current = true;
     }
-    
+
+    // Cleanup function to abort any pending requests when component unmounts
     return () => {
-      isMounted.current = false;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
     };
-  }, []);
+  }, []); // Empty dependency array ensures this runs only once
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -46,10 +49,18 @@ export default function Profile() {
       ...prev,
       ...updatedProfile
     }));
+    // Do NOT call fetchProfile() here as it creates an infinite loop
   };
   
   const fetchProfile = async () => {
-    if (!isMounted.current) return;
+    // Cancel any previous requests
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    // Create a new AbortController for this request
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
     
     const token = localStorage.getItem("token");
     if (!token) {
@@ -57,30 +68,31 @@ export default function Profile() {
       setLoading(false);
       return;
     }
+    
     try {
       const res = await fetch(getApiUrl("api/users/profile"), {
         headers: { Authorization: `Bearer ${token}` },
+        signal: signal
       });
-      
-      if (!isMounted.current) return;
       
       if (res.ok) {
         const data = await res.json();
         setProfile(data.user);
         if (data.user.posts) {
+          console.log(`Fetched ${data.user.posts.length} posts`);
           setPosts(data.user.posts);
         }
       } else {
         setMessage("Unauthorized or error fetching profile");
       }
     } catch (error) {
-      if (!isMounted.current) return;
-      console.error("Error fetching profile:", error);
-      setMessage("An error occurred. Please try again.");
-    } finally {
-      if (isMounted.current) {
-        setLoading(false);
+      // Only log errors that aren't from aborting the request
+      if (error.name !== 'AbortError') {
+        console.error("Error fetching profile:", error);
+        setMessage("An error occurred. Please try again.");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -191,6 +203,24 @@ export default function Profile() {
         </div>
       </div>
       
+      {/* Debug Section - Only visible in development */}
+      {process.env.NODE_ENV !== 'production' && (
+        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <h3 className="text-lg font-semibold mb-2 text-yellow-800">Debug Info</h3>
+          <p className="mb-2 text-yellow-800">Posts count: {posts.length}</p>
+          <div className="overflow-auto max-h-40">
+            <pre className="text-xs text-yellow-800">
+              {JSON.stringify(posts.map(post => ({
+                id: post._id,
+                imageUrl: post.imageUrl ? `${post.imageUrl.substring(0, 30)}...` : 'none',
+                imageData: post.imageData ? `${post.imageData.substring(0, 30)}...` : 'none',
+                caption: post.caption
+              })), null, 2)}
+            </pre>
+          </div>
+        </div>
+      )}
+      
       {/* Posts Grid */}
       <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
         <h2 className="text-xl font-bold mb-4">Posts</h2>
@@ -203,32 +233,41 @@ export default function Profile() {
           </div>
         ) : posts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 md:gap-4">
-            {posts.map(post => (
-              <Link key={post._id} href={`/post/${post._id}`}>
-                <div className="aspect-square relative overflow-hidden bg-gray-100 dark:bg-gray-800">
-                  <OptimizedImage
-                    src={post.imageData || post.imageUrl}
-                    alt={post.caption || "Post"}
-                    width={300}
-                    height={300}
-                    className="w-full h-full object-cover hover:opacity-90 transition-opacity"
-                  />
-                  
-                  <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 flex items-center justify-center opacity-0 hover:opacity-100 transition-all duration-200">
-                    <div className="flex space-x-4 text-white">
-                      <div className="flex items-center">
-                        <FiHeart className="mr-1" />
-                        <span>{post.likesCount || 0}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <FiMessageCircle className="mr-1" />
-                        <span>{post.commentsCount || 0}</span>
+            {posts.map(post => {
+              // Determine the best image source
+              const imageSource = post.imageData || post.imageUrl || `https://ui-avatars.com/api/?name=${post.caption || 'Post'}&background=random&format=png`;
+              
+              return (
+                <Link key={post._id} href={`/post/${post._id}`}>
+                  <div className="aspect-square relative overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    {/* Use standard img tag */}
+                    <img
+                      src={imageSource}
+                      alt={post.caption || "Post"}
+                      className="w-full h-full object-cover hover:opacity-90 transition-opacity"
+                      onError={(e) => {
+                        console.error("Image failed to load:", post._id);
+                        e.target.onerror = null;
+                        e.target.src = `https://ui-avatars.com/api/?name=${post.caption || 'Post'}&background=random&format=png`;
+                      }}
+                    />
+                    
+                    <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 flex items-center justify-center opacity-0 hover:opacity-100 transition-all duration-200">
+                      <div className="flex space-x-4 text-white">
+                        <div className="flex items-center">
+                          <FiHeart className="mr-1" />
+                          <span>{post.likesCount || 0}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <FiMessageCircle className="mr-1" />
+                          <span>{post.commentsCount || 0}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-10">

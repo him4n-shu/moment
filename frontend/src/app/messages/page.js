@@ -23,10 +23,35 @@ export default function MessagesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const messagesEndRef = useRef(null);
   const emojiPickerRef = useRef(null);
 
   // Define all functions before using them in useEffect
+  const fetchCurrentUser = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+
+      const response = await fetch(getApiUrl('api/users/profile'), {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user profile');
+      }
+
+      const data = await response.json();
+      setCurrentUser(data.user);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      setError(error.message);
+    }
+  }, [router]);
+
   const fetchConversations = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
@@ -96,8 +121,9 @@ export default function MessagesPage() {
 
   // Now use the functions in useEffect hooks
   useEffect(() => {
+    fetchCurrentUser();
     fetchConversations();
-  }, [fetchConversations]);
+  }, [fetchCurrentUser, fetchConversations]);
 
   useEffect(() => {
     // Hide conversation list on mobile when a specific conversation is selected
@@ -174,12 +200,12 @@ export default function MessagesPage() {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedConversation) return;
+    if (!newMessage.trim() || !selectedConversation || !currentUser) return;
 
     const tempMessage = {
       _id: `temp-${Date.now()}`,
       content: newMessage,
-      sender: { _id: user._id },
+      sender: { _id: currentUser._id },
       createdAt: new Date().toISOString(),
       isTemp: true
     };
@@ -208,7 +234,9 @@ export default function MessagesPage() {
       }
 
       const data = await response.json();
-      setMessages(prev => [...prev, data.message]);
+      setMessages(prev => prev.map(msg => 
+        msg.isTemp && msg._id === tempMessage._id ? data.message : msg
+      ));
     } catch (error) {
       console.error('Error sending message:', error);
       setError(error.message);
