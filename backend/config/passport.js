@@ -10,7 +10,7 @@ console.log('Google Client Secret:', process.env.GOOGLE_CLIENT_SECRET ? 'Present
 
 // Get the base URL for the backend
 const backendUrl = process.env.NODE_ENV === 'production'
-  ? process.env.BACKEND_URL || 'http://localhost:5000'
+  ? process.env.BACKEND_URL || 'https://moment-deuw.onrender.com'
   : 'http://localhost:5000';
 
 // Google OAuth
@@ -41,11 +41,10 @@ passport.use(
         user = await User.create({
           username: profile.displayName || `user_${profile.id}`,
           email: profile.emails[0].value,
-          password: 'google-oauth-' + Math.random().toString(36).slice(-8), // Random password for Google users
-          googleId: profile.id,
+          password: 'google-oauth-' + Math.random().toString(36).slice(-8), 
           firstName: firstName,
           lastName: lastName,
-          isVerified: true // Auto-verify Google users
+          isVerified: true 
         });
 
         return done(null, user);

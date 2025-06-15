@@ -23,7 +23,7 @@ router.get('/google/callback',
       
       // Get frontend URL from environment or use default
       const frontendUrl = process.env.NODE_ENV === 'production'
-        ? process.env.FRONTEND_URL || 'http://localhost:3000'
+        ? process.env.FRONTEND_URL || 'https://moment-two-rho.vercel.app'
         : 'http://localhost:3000';
       
       // Redirect to frontend with token
@@ -31,7 +31,7 @@ router.get('/google/callback',
     } catch (error) {
       console.error('Google callback error:', error);
       const redirectUrl = process.env.NODE_ENV === 'production'
-        ? process.env.FRONTEND_URL || 'http://localhost:3000'
+        ? process.env.FRONTEND_URL || 'https://moment-two-rho.vercel.app'
         : 'http://localhost:3000';
       res.redirect(`${redirectUrl}/login?error=server_error`);
     }
@@ -74,8 +74,7 @@ router.post('/register/init', async (req, res) => {
     // Generate OTP
     const otp = generateOTP();
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + 10 * 60000); // 10 minutes expiry
-
+    const expiresAt = new Date(now.getTime() + 10 * 60000); 
     // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -191,8 +190,7 @@ router.post('/register/resend-otp', async (req, res) => {
     // Generate new OTP
     const otp = generateOTP();
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + 10 * 60000); // 10 minutes expiry
-
+    const expiresAt = new Date(now.getTime() + 10 * 60000);
     user.otp = {
       code: otp,
       generatedAt: now,
