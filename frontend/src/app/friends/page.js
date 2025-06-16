@@ -152,35 +152,28 @@ export default function FriendsPage() {
       {/* Users List */}
       <div className="space-y-4">
         {(activeTab === 'followers' ? followers : following).map(user => (
-          <div
-            key={user.id}
-            className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm"
-          >
-            <Link
-              href={`/profile/${user.username}`}
-              className="flex items-center flex-1"
-            >
-              <OptimizedImage
-                src={user.profilePic || '/default-avatar.png'}
-                alt={user.username}
-                width={40}
-                height={40}
-                className="w-10 h-10 rounded-full"
-              />
-              <div className="ml-3">
-                <div className="font-medium">{user.username}</div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {user.fullName}
-                </div>
+          <div key={user.id} className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center">
+              <div className="h-12 w-12 rounded-full overflow-hidden">
+                <OptimizedImage
+                  src={user.profilePic || `https://ui-avatars.com/api/?name=${user.username}&background=random`}
+                  alt={user.username}
+                  width={48}
+                  height={48}
+                  className="h-full w-full object-cover"
+                />
               </div>
-            </Link>
-
+              <div className="ml-4">
+                <div className="font-medium">{user.username}</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">{user.fullName}</div>
+              </div>
+            </div>
             <button
               onClick={() => handleFollow(user.id, user.isFollowing)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium ${
+              className={`px-4 py-2 rounded-full text-sm font-medium ${
                 user.isFollowing
-                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
-                  : 'bg-blue-500 text-white hover:bg-blue-600'
+                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
+                  : 'bg-blue-500 text-white'
               }`}
             >
               {user.isFollowing ? 'Following' : 'Follow'}

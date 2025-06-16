@@ -34,23 +34,23 @@ export default function Home() {
       }
       
       try {
-        // Fetch user profile
-        const profileRes = await fetch(getApiUrl("api/users/profile"), {
+        // Fetch user basic info
+        const userRes = await fetch(getApiUrl("api/auth/me"), {
           headers: { Authorization: `Bearer ${token}` },
         });
         
-        if (!profileRes.ok) {
-          const errorData = await profileRes.json();
+        if (!userRes.ok) {
+          const errorData = await userRes.json();
           if (errorData.message?.includes("Token is not valid")) {
             localStorage.removeItem("token");
             router.push('/login');
             return;
           }
-          throw new Error(errorData.message || "Failed to fetch user profile");
+          throw new Error(errorData.message || "Failed to fetch user info");
         }
 
-        const profileData = await profileRes.json();
-        setUser(profileData.user);
+        const userData = await userRes.json();
+        setUser(userData.user);
         
         // Fetch posts
         const postsRes = await fetch(getApiUrl("api/posts/feed"), {
@@ -299,23 +299,35 @@ export default function Home() {
               className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg mb-4"
             >
               {/* Post Header */}
-              <div className="flex items-center p-4">
-                <Link href={`/profile/${post.user.username}`} className="flex items-center flex-1">
-                  <OptimizedImage
-                    src={post.user.profilePic || '/default-avatar.png'}
-                    alt={post.user.username}
-                    width={40}
-                    height={40}
-                    className="w-10 h-10 rounded-full"
-                  />
-                  <div className="ml-3">
-                    <span className="font-semibold">{post.user.username}</span>
-                    {post.location && (
-                      <div className="text-xs text-gray-500">{post.location}</div>
-                    )}
+              <div className="flex items-center justify-between p-3">
+                <div className="flex items-center">
+                  <div className="flex items-center">
+                    <div className="h-10 w-10 rounded-full overflow-hidden mr-3">
+                      <Link href={`/profile/${post.user.username}`}>
+                        <OptimizedImage
+                          src={post.user.profilePic || `https://ui-avatars.com/api/?name=${post.user.username}&background=random`}
+                          alt={post.user.username}
+                          width={40}
+                          height={40}
+                          className="h-full w-full object-cover"
+                        />
+                      </Link>
+                    </div>
+                    <div className="font-semibold mr-2">
+                      <Link 
+                        href={`/profile/${post.user.username}`}
+                        className="hover:text-blue-500 transition-colors"
+                      >
+                        {post.user.username}
+                      </Link>
+                    </div>
                   </div>
-                </Link>
-                <button className="text-gray-500 hover:text-gray-700">
+                  <span className="text-gray-500 dark:text-gray-400 text-sm">
+                    • {formatDate(post.createdAt)}
+                  </span>
+                </div>
+                
+                <button className="text-gray-500 dark:text-gray-400 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
                   <FiMoreHorizontal />
                 </button>
               </div>
@@ -389,22 +401,34 @@ export default function Home() {
                 {activeCommentPostId === post._id && post.comments && post.comments.length > 0 && (
                   <div className="px-4 pb-4">
                     {post.comments.map(comment => (
-                      <div key={comment._id} className="flex items-start space-x-2 mb-2">
-                        <Link href={`/profile/${comment.user.username}`} className="flex-shrink-0">
-                          <OptimizedImage
-                            src={comment.user.profilePic || '/default-avatar.png'}
-                            alt={comment.user.username}
-                            width={32}
-                            height={32}
-                            className="w-8 h-8 rounded-full"
-                          />
-                        </Link>
-                        <div className="flex-1">
-                          <Link href={`/profile/${comment.user.username}`} className="font-medium hover:underline">
-                            {comment.user.username}
-                          </Link>
-                          <span className="ml-2 text-sm text-gray-600">{comment.text}</span>
+                      <div key={comment._id || comment.id} className="flex items-start space-x-2 mb-2">
+                        <div className="flex items-center mb-2">
+                          <div className="h-8 w-8 rounded-full overflow-hidden mr-2">
+                            <Link href={`/profile/${comment.user.username}`}>
+                              <OptimizedImage
+                                src={comment.user.profilePic || `https://ui-avatars.com/api/?name=${comment.user.username}&background=random`}
+                                alt={comment.user.username}
+                                width={32}
+                                height={32}
+                                className="h-full w-full object-cover"
+                              />
+                            </Link>
+                          </div>
+                          <div className="flex flex-col">
+                            <div className="font-medium text-sm">
+                              <Link 
+                                href={`/profile/${comment.user.username}`}
+                                className="hover:text-blue-500 transition-colors"
+                              >
+                                {comment.user.username}
+                              </Link>
+                            </div>
+                            <div className="text-gray-500 dark:text-gray-400 text-xs">
+                              {formatDate(comment.createdAt || comment.date)}
+                            </div>
+                          </div>
                         </div>
+                        <p className="text-sm mt-1">{comment.text}</p>
                       </div>
                     ))}
                   </div>

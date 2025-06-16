@@ -41,86 +41,6 @@ router.get('/search', auth, async (req, res) => {
   }
 });
 
-// Get user profile by username
-router.get('/profile/:username', auth, async (req, res) => {
-  try {
-    const { username } = req.params;
-
-    if (!username) {
-      return res.status(400).json({ message: 'Username is required' });
-    }
-
-    // First try to find by username
-    let user = await User.findOne({ 
-      username: { $regex: new RegExp('^' + username + '$', 'i') }
-    });
-
-    // If not found by username, check if it's a user ID
-    if (!user && username.match(/^[0-9a-fA-F]{24}$/)) {
-      user = await User.findById(username);
-    }
-
-    if (!user) {
-      return res.status(404).json({ 
-        message: `User not found. Please check the username and try again.`
-      });
-    }
-
-    const posts = await Post.find({ user: user._id })
-      .sort({ createdAt: -1 })
-      .populate('likes', 'username profilePic')
-      .populate({
-        path: 'comments',
-        populate: {
-          path: 'user',
-          select: 'username profilePic'
-        }
-      });
-
-    res.json({
-      user: {
-        _id: user._id,
-        id: user._id,
-        username: user.username,
-        email: user._id.equals(req.user._id) ? user.email : undefined,
-        profilePic: user.profilePic,
-        bio: user.bio,
-        fullName: user.fullName,
-        followersCount: user.followers.length,
-        followingCount: user.following.length,
-        isFollowing: user.followers.includes(req.user._id),
-        isCurrentUser: user._id.equals(req.user._id),
-        postsCount: posts.length,
-        createdAt: user.createdAt,
-        posts: posts.map(post => ({
-          _id: post._id,
-          id: post._id,
-          imageUrl: post.imageUrl,
-          imageData: post.imageData,
-          caption: post.caption,
-          likesCount: post.likes.length,
-          commentsCount: post.comments.length,
-          isLiked: post.likes.some(like => like._id.equals(req.user._id)),
-          createdAt: post.createdAt,
-          comments: post.comments.map(comment => ({
-            id: comment._id,
-            text: comment.text,
-            date: comment.date,
-            user: {
-              id: comment.user._id,
-              username: comment.user.username,
-              profilePic: comment.user.profilePic
-            }
-          }))
-        }))
-      }
-    });
-  } catch (error) {
-    console.error('Profile fetch error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
 // Follow/Unfollow a user
 router.post('/follow/:userId', auth, async (req, res) => {
   try {
@@ -231,101 +151,6 @@ router.post('/follow/:userId', auth, async (req, res) => {
   }
 });
 
-// Get current user's profile
-router.get('/profile', auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id);
-    const posts = await Post.find({ user: req.user._id })
-      .sort({ createdAt: -1 })
-      .populate('likes', 'username profilePic')
-      .populate({
-        path: 'comments',
-        populate: {
-          path: 'user',
-          select: 'username profilePic'
-        }
-      });
-    
-    res.json({
-      user: {
-        _id: user._id,
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        profilePic: user.profilePic,
-        bio: user.bio,
-        fullName: user.fullName,
-        followersCount: user.followers.length,
-        followingCount: user.following.length,
-        postsCount: posts.length,
-        createdAt: user.createdAt,
-        posts: posts.map(post => ({
-          _id: post._id,
-          id: post._id,
-          imageUrl: post.imageUrl,
-          imageData: post.imageData,
-          caption: post.caption,
-          likesCount: post.likes.length,
-          commentsCount: post.comments.length,
-          isLiked: post.likes.some(like => like._id.equals(req.user._id)),
-          createdAt: post.createdAt,
-          comments: post.comments.map(comment => ({
-            id: comment._id,
-            text: comment.text,
-            date: comment.date,
-            user: {
-              id: comment.user._id,
-              username: comment.user.username,
-              profilePic: comment.user.profilePic
-            }
-          }))
-        }))
-      }
-    });
-  } catch (error) {
-    console.error('Profile fetch error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// Update user profile
-router.put('/profile', auth, async (req, res) => {
-  try {
-    const { fullName, bio, profilePic } = req.body;
-    
-    // Find user and update
-    const user = await User.findById(req.user._id);
-    
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Update fields if provided
-    if (fullName) user.fullName = fullName;
-    if (bio !== undefined) user.bio = bio;
-    if (profilePic !== undefined) user.profilePic = profilePic;
-
-    await user.save();
-
-    // Return updated user data
-    res.json({
-      user: {
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        profilePic: user.profilePic,
-        bio: user.bio,
-        fullName: user.fullName,
-        followersCount: user.followers.length,
-        followingCount: user.following.length
-      }
-    });
-  } catch (error) {
-    console.error('Profile update error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
 // Get user's followers
 router.get('/followers/:userId', auth, async (req, res) => {
   try {
@@ -372,6 +197,97 @@ router.get('/following/:userId', auth, async (req, res) => {
     res.json({ following });
   } catch (error) {
     console.error('Error fetching following:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Get current user's profile
+router.get('/profile', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id)
+      .select('-password -__v');
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Add follower and following counts
+    const userObj = user.toObject();
+    userObj.followersCount = user.followers.length;
+    userObj.followingCount = user.following.length;
+
+    res.json({ user: userObj });
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Get user profile by username
+router.get('/profile/:username', auth, async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username })
+      .select('-password -__v');
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check if current user is following this user
+    const isFollowing = user.followers.includes(req.user._id);
+    
+    // Check if this is the current user's profile
+    const isCurrentUser = user._id.toString() === req.user._id.toString();
+
+    // Add follower and following counts
+    const userObj = user.toObject();
+    userObj.followersCount = user.followers.length;
+    userObj.followingCount = user.following.length;
+
+    res.json({ 
+      user: userObj,
+      isFollowing,
+      isCurrentUser
+    });
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Update user profile
+router.put('/profile', auth, async (req, res) => {
+  try {
+    const { fullName, bio, profilePic } = req.body;
+    
+    // Fields to update
+    const updateFields = {};
+    if (fullName !== undefined) updateFields.fullName = fullName;
+    if (bio !== undefined) updateFields.bio = bio;
+    if (profilePic !== undefined) updateFields.profilePic = profilePic;
+    
+    // Update user
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { $set: updateFields },
+      { new: true }
+    ).select('-password -__v');
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Add follower and following counts
+    const userObj = user.toObject();
+    userObj.followersCount = user.followers.length;
+    userObj.followingCount = user.following.length;
+
+    res.json({ 
+      message: 'Profile updated successfully',
+      user: userObj
+    });
+  } catch (error) {
+    console.error('Error updating profile:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });

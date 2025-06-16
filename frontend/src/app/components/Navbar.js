@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import SearchUsers from "./SearchUsers";
-import { FiBell, FiHome, FiPlusSquare, FiMessageCircle, FiUser, FiLogOut, FiLogIn, FiUserPlus, FiWifiOff, FiAlertCircle } from "react-icons/fi";
+import { FiBell, FiHome, FiPlusSquare, FiMessageCircle, FiSettings, FiLogOut, FiLogIn, FiUserPlus, FiWifiOff, FiAlertCircle, FiUser } from "react-icons/fi";
 import NotificationBell from './NotificationBell';
 
 export default function Navbar() {
@@ -71,37 +71,29 @@ export default function Navbar() {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      console.log('Fetching user profile...');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/profile`, {
+      console.log('Fetching user basic info...');
+      // Only fetch minimal user info (username and profile pic) instead of full profile
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch profile');
+        throw new Error('Failed to fetch user info');
       }
 
       const data = await response.json();
-      console.log('User profile data:', data); // Log the response to see its structure
-      // Support both { user: { ... } } and { ... } response shapes
-      const userData = data.user || data;
-      console.log('Processed user data:', userData);
-      setUser(userData);
+      console.log('User data:', data);
+      setUser(data.user || data);
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('Error fetching user info:', error);
     }
   }, []);
 
   useEffect(() => {
     fetchUserProfile();
   }, [fetchUserProfile]);
-
-  useEffect(() => {
-    if (user) {
-      fetchUserProfile();
-    }
-  }, [user, fetchUserProfile]);
   
   useEffect(() => {
     // Close dropdown when clicking outside
@@ -186,16 +178,18 @@ export default function Navbar() {
                 <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
                   <Link
                     href="/profile"
-                    className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="inline-flex w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 items-center"
                     onClick={() => setShowUserMenu(false)}
                   >
-                    Your Profile
+                    <FiUser className="mr-2" />
+                    Profile
                   </Link>
                   <Link
                     href="/settings"
-                    className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="inline-flex w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 items-center"
                     onClick={() => setShowUserMenu(false)}
                   >
+                    <FiSettings className="mr-2" />
                     Settings
                   </Link>
                   <button
@@ -203,8 +197,9 @@ export default function Navbar() {
                       setShowUserMenu(false);
                       handleLogout();
                     }}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="inline-flex w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 items-center"
                   >
+                    <FiLogOut className="mr-2" />
                     Sign out
                   </button>
                 </div>

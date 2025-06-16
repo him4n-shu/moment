@@ -151,7 +151,10 @@ export default function MessagesPage() {
     const params = new URLSearchParams(window.location.search);
     const conversationId = params.get('conversation');
     if (conversationId && conversations.length > 0) {
-      const conversation = conversations.find(conv => conv.id === conversationId);
+      // Try to find the conversation by either id or _id
+      const conversation = conversations.find(conv => 
+        conv.id === conversationId || conv._id === conversationId
+      );
       if (conversation) {
         handleConversationSelect(conversation);
       }
@@ -224,7 +227,7 @@ export default function MessagesPage() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          conversationId: selectedConversation._id,
+          conversationId: selectedConversation.id || selectedConversation._id,
           content: tempMessage.content
         })
       });
@@ -416,20 +419,25 @@ export default function MessagesPage() {
               >
                 <FiChevronLeft className="h-5 w-5" />
               </button>
-              <Link href={`/profile/${selectedConversation.participants[0].username}`}>
-                <div className="flex items-center">
-                  <OptimizedImage
-                    src={selectedConversation.participants[0].profilePic || '/default-avatar.png'}
-                    alt={selectedConversation.participants[0].username}
-                    width={40}
-                    height={40}
-                    className="w-10 h-10 rounded-full"
-                  />
-                  <div className="ml-2 md:ml-3 font-medium">
-                    {selectedConversation.participants[0].username}
+              <div className="flex items-center p-3 border-b dark:border-gray-700">
+                <div className="flex items-center flex-1">
+                  <div className="h-10 w-10 rounded-full overflow-hidden mr-3">
+                    <OptimizedImage
+                      src={selectedConversation.participants[0].profilePic || `https://ui-avatars.com/api/?name=${selectedConversation.participants[0].username}&background=random`}
+                      alt={selectedConversation.participants[0].username}
+                      width={40}
+                      height={40}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div>
+                    <div className="font-medium">{selectedConversation.participants[0].username}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {selectedConversation.participants[0].isOnline ? 'Online' : 'Offline'}
+                    </div>
                   </div>
                 </div>
-              </Link>
+              </div>
               <button className="ml-auto p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
                 <FiMoreVertical />
               </button>

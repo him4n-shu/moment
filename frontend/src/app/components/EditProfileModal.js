@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FiX, FiImage, FiUser, FiInfo } from "react-icons/fi";
 import OptimizedImage from './OptimizedImage';
 import { getApiUrl } from '@/utils/api';
@@ -13,14 +13,6 @@ export default function EditProfileModal({ profile, isOpen, onClose, onUpdate })
   const [error, setError] = useState("");
   const fileInputRef = useRef(null);
   const modalRef = useRef(null);
-  const isMounted = useRef(true);
-
-  // Cleanup function
-  useEffect(() => {
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
 
   // Initialize form with profile data when modal opens
   useEffect(() => {
@@ -50,7 +42,7 @@ export default function EditProfileModal({ profile, isOpen, onClose, onUpdate })
     };
   }, [isOpen, onClose]);
 
-  // Resize the image before saving it
+  // Handle image selection
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -115,93 +107,59 @@ export default function EditProfileModal({ profile, isOpen, onClose, onUpdate })
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isMounted.current) return;
-    
     setIsSubmitting(true);
     setError("");
 
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        if (isMounted.current) {
-          setError("You must be logged in");
-          setIsSubmitting(false);
-        }
+        setError("You must be logged in");
+        setIsSubmitting(false);
         return;
       }
 
-      // Check if the profile picture is too large
-      if (profilePic && profilePic.length > 10 * 1024 * 1024) {
-        if (isMounted.current) {
-          setError("Profile picture is too large. Please use an image smaller than 5MB");
-          setIsSubmitting(false);
-        }
-        return;
-      }
-
-      // Create FormData object for multipart/form-data submission
-      const formData = new FormData();
-      formData.append("username", profile.username);
-      formData.append("bio", bio || "");
-      formData.append("website", profile.website || "");
-      formData.append("firstName", profile.firstName || "");
-      formData.append("lastName", profile.lastName || "");
-      
-      // Only append profilePicture if a new one was selected
-      if (profilePic && profilePic !== profile.profilePic) {
-        formData.append("profilePicture", profilePic);
-      }
-      
       const response = await fetch(getApiUrl("api/users/profile"), {
         method: "PUT",
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: formData
+        body: JSON.stringify({
+          fullName,
+          bio,
+          profilePic
+        })
       });
 
-      if (!isMounted.current) return;
-
       if (!response.ok) {
-        // Handle non-JSON responses
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const data = await response.json();
-          throw new Error(data.message || "Failed to update profile");
-        } else {
-          throw new Error(`Failed to update profile: ${response.status} ${response.statusText}`);
-        }
+        const data = await response.json();
+        throw new Error(data.message || "Failed to update profile");
       }
 
       const data = await response.json();
-      if (isMounted.current) {
-        onUpdate(data.user);
-        onClose();
-      }
+      onUpdate(data.user);
+      onClose();
     } catch (error) {
-      if (!isMounted.current) return;
       console.error("Profile update error:", error);
       setError(error.message || "An error occurred while updating your profile");
     } finally {
-      if (isMounted.current) {
-        setIsSubmitting(false);
-      }
+      setIsSubmitting(false);
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div 
         ref={modalRef}
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto transition-colors duration-300"
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
           <h2 className="text-lg font-semibold">Edit Profile</h2>
           <button 
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
             <FiX size={24} />
           </button>
@@ -234,7 +192,9 @@ export default function EditProfileModal({ profile, isOpen, onClose, onUpdate })
                 </div>
               )}
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center transition-all">
-                <FiImage size={24} className="text-white opacity-0 group-hover:opacity-100" />
+                <div className="bg-white dark:bg-gray-800 rounded-full p-2 transform transition-transform duration-200 hover:scale-110 opacity-0 group-hover:opacity-100">
+                  <FiImage className="text-gray-800 dark:text-gray-200" size={20} />
+                </div>
               </div>
             </div>
 
@@ -249,7 +209,7 @@ export default function EditProfileModal({ profile, isOpen, onClose, onUpdate })
             <button 
               type="button" 
               onClick={triggerFileInput}
-              className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+              className="text-blue-500 text-sm font-medium"
             >
               Change Profile Photo
             </button>
@@ -257,57 +217,42 @@ export default function EditProfileModal({ profile, isOpen, onClose, onUpdate })
 
           {/* Full Name */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Name
-            </label>
+            <label className="block text-sm font-medium mb-1">Full Name</label>
             <input
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors"
-              placeholder="Your name"
+              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              placeholder="Your full name"
             />
           </div>
 
           {/* Bio */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Bio
-            </label>
+          <div className="mb-6">
+            <label className="block text-sm font-medium mb-1">Bio</label>
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              rows={4}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors"
+              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 resize-none"
               placeholder="Write something about yourself..."
-            ></textarea>
+              rows={4}
+            />
           </div>
 
-          {previewImage && (
-            <div className="mt-4">
-              <OptimizedImage
-                src={previewImage}
-                alt="Profile preview"
-                width={150}
-                height={150}
-                className="rounded-full mx-auto"
-              />
-            </div>
-          )}
-
-          <div className="flex justify-end space-x-2 mt-6">
+          {/* Submit Button */}
+          <div className="flex justify-end">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              className="px-4 py-2 mr-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              disabled={isSubmitting}
             >
               Cancel
             </button>
             <button
               type="submit"
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
               disabled={isSubmitting}
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ backgroundColor: 'var(--primary)', ':hover': { backgroundColor: 'var(--primary-hover)' } }}
             >
               {isSubmitting ? "Saving..." : "Save Changes"}
             </button>
@@ -316,4 +261,4 @@ export default function EditProfileModal({ profile, isOpen, onClose, onUpdate })
       </div>
     </div>
   );
-}
+} 

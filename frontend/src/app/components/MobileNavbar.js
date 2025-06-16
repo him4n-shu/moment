@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { FiMenu, FiX, FiHome, FiUser, FiSettings, FiLogIn, FiLogOut, FiPlusSquare, FiMessageCircle, FiUsers, FiBell } from "react-icons/fi";
+import { FiMenu, FiX, FiHome, FiSettings, FiLogIn, FiLogOut, FiPlusSquare, FiMessageCircle, FiUsers, FiBell, FiUser } from "react-icons/fi";
 import OptimizedImage from './OptimizedImage';
 
 export default function MobileNavbar({ user, toggleMenu, isOpen }) {
@@ -51,9 +51,6 @@ export default function MobileNavbar({ user, toggleMenu, isOpen }) {
                   </div>
                   <div>
                     <div className="font-medium text-gray-900 dark:text-white">{user.username}</div>
-                    <Link href="/profile" className="text-sm text-gray-600 dark:text-gray-400 hover:underline">
-                      View profile
-                    </Link>
                   </div>
                 </div>
                 
@@ -113,7 +110,7 @@ export default function MobileNavbar({ user, toggleMenu, isOpen }) {
                 </Link>
                 
                 <Link href="/register" className="flex items-center space-x-3 p-3 rounded-lg text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
-                  <FiUser size={20} />
+                  <FiUsers size={20} />
                   <span>Register</span>
                 </Link>
               </>

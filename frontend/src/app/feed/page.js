@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { FiHeart, FiMessageCircle, FiBookmark, FiClock, FiRefreshCw } from "react-icons/fi";
+import { FiHeart, FiMessageCircle, FiBookmark, FiClock, FiRefreshCw, FiMoreHorizontal } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
 import Link from "next/link";
 import OptimizedImage from '../components/OptimizedImage';
@@ -103,9 +103,21 @@ export default function Feed() {
       const data = await response.json();
       
       if (data.post && data.post.comments) {
+        // Map the comments to ensure consistent structure
+        const formattedComments = data.post.comments.map(comment => ({
+          _id: comment._id,
+          text: comment.text,
+          createdAt: comment.createdAt,
+          user: {
+            _id: comment.user._id,
+            username: comment.user.username,
+            profilePic: comment.user.profilePic
+          }
+        }));
+        
         setPostComments(prev => ({ 
           ...prev, 
-          [postId]: data.post.comments 
+          [postId]: formattedComments 
         }));
       }
     } catch (error) {
@@ -346,28 +358,37 @@ export default function Feed() {
           {posts.map((post) => (
             <div key={post._id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg">
               {/* Post Header */}
-              <div className="flex items-center p-3 border-b border-gray-200 dark:border-gray-700">
-                <Link href={`/profile/${post.user.username}`} className="flex items-center">
-                  <OptimizedImage
-                    src={post.user.profilePic || '/default-avatar.png'}
-                    alt={post.user.username}
-                    width={40}
-                    height={40}
-                    className="w-10 h-10 rounded-full"
-                  />
-                  <div className="ml-3">
-                    <div className="font-medium">{post.user.username}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
-                      {formatDate(post.createdAt)}
-                      {post.location && (
-                        <>
-                          <span className="mx-1">•</span>
-                          <span>{post.location}</span>
-                        </>
-                      )}
+              <div className="flex items-center justify-between p-3">
+                <div className="flex items-center">
+                  <div className="flex items-center">
+                    <div className="h-10 w-10 rounded-full overflow-hidden mr-3">
+                      <Link href={`/profile/${post.user.username}`}>
+                        <OptimizedImage
+                          src={post.user.profilePic || `https://ui-avatars.com/api/?name=${post.user.username}&background=random`}
+                          alt={post.user.username}
+                          width={40}
+                          height={40}
+                          className="h-full w-full object-cover"
+                        />
+                      </Link>
+                    </div>
+                    <div className="font-bold mr-2">
+                      <Link 
+                        href={`/profile/${post.user.username}`}
+                        className="hover:text-blue-500 transition-colors"
+                      >
+                        {post.user.username}
+                      </Link>
                     </div>
                   </div>
-                </Link>
+                  <span className="text-gray-500 dark:text-gray-400 text-sm">
+                    • {formatDate(post.createdAt)}
+                  </span>
+                </div>
+                
+                <button className="text-gray-500 dark:text-gray-400 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
+                  <FiMoreHorizontal />
+                </button>
               </div>
               
               {/* Post Image */}
@@ -417,9 +438,6 @@ export default function Feed() {
               {/* Post Caption */}
               <div className="p-3 text-sm text-gray-800 dark:text-gray-200">
                 <p>
-                  <Link href={`/profile/${post.user.username}`} className="font-bold mr-2">
-                    {post.user.username}
-                  </Link>
                   {post.caption}
                 </p>
               </div>
@@ -473,26 +491,33 @@ export default function Feed() {
                     ) : hasComments(post._id) ? (
                       postComments[post._id].map((comment) => (
                         <div key={comment._id} className="flex items-start mb-3">
-                          <Link href={`/profile/${comment.user.username}`} className="flex-shrink-0">
-                            <OptimizedImage
-                              src={comment.user.profilePic || '/default-avatar.png'}
-                              alt={comment.user.username}
-                              width={32}
-                              height={32}
-                              className="w-8 h-8 rounded-full"
-                            />
-                          </Link>
-                          <div className="flex-1 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2">
-                            <div className="flex justify-between items-start">
-                              <Link href={`/profile/${comment.user.username}`} className="font-medium text-sm">
-                                {comment.user.username}
+                          <div className="flex items-center mb-2">
+                            <div className="h-8 w-8 rounded-full overflow-hidden mr-2">
+                              <Link href={`/profile/${comment.user.username}`}>
+                                <OptimizedImage
+                                  src={comment.user.profilePic || `https://ui-avatars.com/api/?name=${comment.user.username}&background=random`}
+                                  alt={comment.user.username}
+                                  width={32}
+                                  height={32}
+                                  className="h-full w-full object-cover"
+                                />
                               </Link>
-                              <span className="text-xs text-gray-500 dark:text-gray-400">
-                                {formatDate(comment.createdAt)}
-                              </span>
                             </div>
-                            <p className="text-sm mt-1">{comment.text}</p>
+                            <div className="flex flex-col">
+                              <div className="font-medium text-sm">
+                                <Link 
+                                  href={`/profile/${comment.user.username}`}
+                                  className="hover:text-blue-500 transition-colors"
+                                >
+                                  {comment.user.username}
+                                </Link>
+                              </div>
+                              <div className="text-gray-500 dark:text-gray-400 text-xs">
+                                {formatDate(comment.createdAt)}
+                              </div>
+                            </div>
                           </div>
+                          <p className="text-sm mt-1">{comment.text}</p>
                         </div>
                       ))
                     ) : (

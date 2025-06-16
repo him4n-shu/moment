@@ -1,98 +1,122 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
-import Link from "next/link";
-import EditProfileModal from "../components/EditProfileModal";
-import { FiEdit2, FiLogOut, FiCamera, FiHeart, FiMessageCircle, FiX } from "react-icons/fi";
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { FiEdit2, FiGrid, FiSettings, FiBookmark } from "react-icons/fi";
 import OptimizedImage from '../components/OptimizedImage';
 import { getApiUrl } from '@/utils/api';
+import EditProfileModal from '../components/EditProfileModal';
 
 export default function Profile() {
-  const [profile, setProfile] = useState(null);
+  const router = useRouter();
+  const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
-  const [message, setMessage] = useState("");
-  const [activeTab, setActiveTab] = useState("posts");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState("posts");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
   const [followers, setFollowers] = useState([]);
   const [following, setFollowing] = useState([]);
-  const fetchedRef = useRef(false);
-  const abortControllerRef = useRef(null);
 
   useEffect(() => {
-    // Only fetch profile once when component mounts
-    if (!fetchedRef.current) {
-      fetchProfile();
-      fetchedRef.current = true;
-    }
+    fetchUserProfile();
+  }, []);
 
-    // Cleanup function to abort any pending requests when component unmounts
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+  const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        router.push("/login");
+        return;
       }
-    };
-  }, []); // Empty dependency array ensures this runs only once
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    window.location.href = "/login";
+      // Fetch user data
+      const userRes = await fetch(getApiUrl("api/users/profile"), {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!userRes.ok) {
+        if (userRes.status === 401) {
+          localStorage.removeItem("token");
+          router.push("/login");
+          return;
+        }
+        throw new Error("Failed to fetch profile");
+      }
+
+      const userData = await userRes.json();
+      setUser(userData.user);
+
+      // Fetch user posts
+      const postsRes = await fetch(getApiUrl(`api/posts/user/${userData.user._id}`), {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!postsRes.ok) {
+        throw new Error("Failed to fetch posts");
+      }
+
+      const postsData = await postsRes.json();
+      setPosts(postsData.posts || []);
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      setError(error.message || "An error occurred");
+    } finally {
+      setLoading(false);
+    }
   };
-  
+
   const handleEditProfile = () => {
     setIsEditModalOpen(true);
   };
-  
+
   const handleProfileUpdate = (updatedProfile) => {
-    setProfile(prev => ({
+    setUser(prev => ({
       ...prev,
       ...updatedProfile
     }));
-    // Do NOT call fetchProfile() here as it creates an infinite loop
   };
-  
-  const fetchProfile = async () => {
-    // Cancel any previous requests
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    
-    // Create a new AbortController for this request
-    abortControllerRef.current = new AbortController();
-    const signal = abortControllerRef.current.signal;
-    
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setMessage("Not logged in");
-      setLoading(false);
-      return;
-    }
+
+  const fetchFollowers = async () => {
+    if (!user) return;
     
     try {
-      const res = await fetch(getApiUrl("api/users/profile"), {
-        headers: { Authorization: `Bearer ${token}` },
-        signal: signal
+      const token = localStorage.getItem("token");
+      const response = await fetch(getApiUrl(`api/users/followers/${user._id}`), {
+        headers: { Authorization: `Bearer ${token}` }
       });
       
-      if (res.ok) {
-        const data = await res.json();
-        setProfile(data.user);
-        if (data.user.posts) {
-          console.log(`Fetched ${data.user.posts.length} posts`);
-          setPosts(data.user.posts);
-        }
-      } else {
-        setMessage("Unauthorized or error fetching profile");
+      if (!response.ok) {
+        throw new Error("Failed to fetch followers");
       }
+      
+      const data = await response.json();
+      setFollowers(data.followers || []);
+      setShowFollowers(true);
     } catch (error) {
-      // Only log errors that aren't from aborting the request
-      if (error.name !== 'AbortError') {
-        console.error("Error fetching profile:", error);
-        setMessage("An error occurred. Please try again.");
+      console.error("Error fetching followers:", error);
+    }
+  };
+
+  const fetchFollowing = async () => {
+    if (!user) return;
+    
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(getApiUrl(`api/users/following/${user._id}`), {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch following");
       }
-    } finally {
-      setLoading(false);
+      
+      const data = await response.json();
+      setFollowing(data.following || []);
+      setShowFollowing(true);
+    } catch (error) {
+      console.error("Error fetching following:", error);
     }
   };
 
@@ -104,55 +128,56 @@ export default function Profile() {
     );
   }
 
-  if (!profile) {
+  if (error) {
     return (
-      <div className="text-center mt-20">
-        <p className="text-red-600 mb-4">{message || "Loading..."}</p>
-        {message && message !== "Loading..." && (
-          <Link
-            href="/login"
-            className="transition-colors duration-300"
-            style={{ color: 'var(--primary)' }}
-          >
-            Go to Login
-          </Link>
-        )}
+      <div className="max-w-4xl mx-auto pt-8 px-4">
+        <div className="bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-200 p-4 rounded-lg">
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="max-w-4xl mx-auto pt-8 px-4">
+        <div className="bg-yellow-50 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 p-4 rounded-lg">
+          <p>User profile not found</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto pt-4 md:pt-8 px-3 md:px-6 transition-colors duration-300">
+    <div className="max-w-4xl mx-auto pt-6 px-4">
       {/* Profile Header */}
-      <div className="flex flex-col md:flex-row items-center md:items-start mb-6 md:mb-8">
+      <div className="flex flex-col md:flex-row items-center md:items-start mb-8">
         {/* Profile Picture */}
-        <div className="relative w-24 h-24 md:w-36 md:h-36 rounded-full overflow-hidden flex-shrink-0 mb-4 md:mb-0 md:mr-8 profile-picture-container">
+        <div className="relative w-24 h-24 md:w-36 md:h-36 rounded-full overflow-hidden flex-shrink-0 mb-4 md:mb-0 md:mr-8">
           <OptimizedImage
-            src={profile.profilePic || `https://ui-avatars.com/api/?name=${profile.username}&background=random`}
-            alt={profile.username}
+            src={user.profilePic || `https://ui-avatars.com/api/?name=${user.username}&background=random`}
+            alt={user.username}
             width={144}
             height={144}
             className="w-full h-full object-cover"
           />
-          <div 
-            className="profile-picture-overlay cursor-pointer"
+          <button 
             onClick={handleEditProfile}
+            className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 flex items-center justify-center transition-opacity"
           >
-            <div className="bg-white dark:bg-gray-800 rounded-full p-2 transform transition-transform duration-200 hover:scale-110">
-              <FiCamera className="text-gray-800 dark:text-gray-200" size={20} />
-            </div>
-          </div>
+            <FiEdit2 className="text-white opacity-0 hover:opacity-100" size={24} />
+          </button>
         </div>
         
         {/* Profile Info */}
         <div className="flex-1 text-center md:text-left">
           <div className="flex flex-col md:flex-row md:items-center mb-4">
-            <h1 className="text-2xl font-bold mb-1 md:mb-0 md:mr-4">{profile.username}</h1>
+            <h1 className="text-2xl font-bold mb-1 md:mb-0 md:mr-4">{user.username}</h1>
             
             {/* Edit Profile Button */}
             <button 
               onClick={handleEditProfile}
-              className="px-6 py-2 rounded-lg font-medium bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200 flex items-center gap-2 mx-auto md:mx-0 mt-2 md:mt-0"
+              className="px-4 py-1 rounded-md font-medium bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200 flex items-center gap-2 mx-auto md:mx-0 mt-2 md:mt-0"
             >
               <FiEdit2 size={16} />
               <span>Edit Profile</span>
@@ -162,179 +187,140 @@ export default function Profile() {
           {/* Stats */}
           <div className="flex justify-center md:justify-start space-x-6 mb-4">
             <div className="text-center">
-              <span className="font-bold">{profile.postsCount || 0}</span>
+              <span className="font-bold">{posts.length}</span>
               <p className="text-sm text-gray-600 dark:text-gray-400">Posts</p>
             </div>
-            <div className="text-center cursor-pointer" onClick={() => setShowFollowers(true)}>
-              <span className="font-bold">{profile.followersCount || 0}</span>
+            <button 
+              className="text-center cursor-pointer" 
+              onClick={fetchFollowers}
+            >
+              <span className="font-bold">{user.followersCount || 0}</span>
               <p className="text-sm text-gray-600 dark:text-gray-400">Followers</p>
-            </div>
-            <div className="text-center cursor-pointer" onClick={() => setShowFollowing(true)}>
-              <span className="font-bold">{profile.followingCount || 0}</span>
+            </button>
+            <button 
+              className="text-center cursor-pointer" 
+              onClick={fetchFollowing}
+            >
+              <span className="font-bold">{user.followingCount || 0}</span>
               <p className="text-sm text-gray-600 dark:text-gray-400">Following</p>
-            </div>
+            </button>
           </div>
           
           {/* Bio */}
-          {profile.bio && (
+          {user.bio && (
             <div className="mb-4 max-w-md">
-              <p className="text-sm whitespace-pre-wrap">{profile.bio}</p>
+              <p className="text-sm whitespace-pre-wrap">{user.bio}</p>
             </div>
           )}
           
           {/* Full Name */}
-          {profile.fullName && (
-            <div className="text-sm font-semibold mb-1">{profile.fullName}</div>
-          )}
-          
-          {/* Website */}
-          {profile.website && (
-            <div className="mb-4">
-              <a 
-                href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`}
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-              >
-                {profile.website.replace(/^https?:\/\/(www\.)?/, '')}
-              </a>
-            </div>
+          {user.fullName && (
+            <div className="text-sm font-semibold mb-1">{user.fullName}</div>
           )}
         </div>
       </div>
       
-      {/* Debug Section - Only visible in development */}
-      {process.env.NODE_ENV !== 'production' && (
-        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <h3 className="text-lg font-semibold mb-2 text-yellow-800">Debug Info</h3>
-          <p className="mb-2 text-yellow-800">Posts count: {posts.length}</p>
-          <div className="overflow-auto max-h-40">
-            <pre className="text-xs text-yellow-800">
-              {JSON.stringify(posts.map(post => ({
-                id: post._id,
-                imageUrl: post.imageUrl ? `${post.imageUrl.substring(0, 30)}...` : 'none',
-                imageData: post.imageData ? `${post.imageData.substring(0, 30)}...` : 'none',
-                caption: post.caption
-              })), null, 2)}
-            </pre>
-          </div>
+      {/* Tabs */}
+      <div className="border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-center">
+          <button
+            className={`py-3 px-4 flex items-center ${activeTab === "posts" ? "border-t-2 border-black dark:border-white" : ""}`}
+            onClick={() => setActiveTab("posts")}
+          >
+            <FiGrid className="mr-1" />
+            <span>Posts</span>
+          </button>
+          <button
+            className={`py-3 px-4 flex items-center ${activeTab === "saved" ? "border-t-2 border-black dark:border-white" : ""}`}
+            onClick={() => setActiveTab("saved")}
+          >
+            <FiBookmark className="mr-1" />
+            <span>Saved</span>
+          </button>
+        </div>
+      </div>
+      
+      {/* Posts Grid */}
+      {activeTab === "posts" && (
+        <div className="grid grid-cols-3 gap-1 md:gap-4">
+          {posts.length > 0 ? (
+            posts.map(post => (
+              <div 
+                key={post._id} 
+                className="aspect-square relative cursor-pointer"
+                onClick={() => router.push(`/post/${post._id}`)}
+              >
+                <OptimizedImage
+                  src={post.imageData || post.imageUrl || `https://ui-avatars.com/api/?name=${post.caption || 'Post'}&background=random`}
+                  alt={post.caption || "Post"}
+                  width={300}
+                  height={300}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ))
+          ) : (
+            <div className="col-span-3 py-8 text-center text-gray-500 dark:text-gray-400">
+              <p className="mb-4">No posts yet</p>
+              <button
+                onClick={() => router.push('/post/new')}
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+              >
+                Create your first post
+              </button>
+            </div>
+          )}
         </div>
       )}
       
-      {/* Posts Grid */}
-      <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-        <h2 className="text-xl font-bold mb-4">Posts</h2>
-        
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 md:gap-4">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="aspect-square bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
-            ))}
-          </div>
-        ) : posts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 md:gap-4">
-            {posts.map(post => {
-              // Determine the best image source
-              const imageSource = post.imageData || post.imageUrl || `https://ui-avatars.com/api/?name=${post.caption || 'Post'}&background=random&format=png`;
-              
-              return (
-                <Link key={post._id} href={`/post/${post._id}`}>
-                  <div className="aspect-square relative overflow-hidden bg-gray-100 dark:bg-gray-800">
-                    {/* Use standard img tag */}
-                    <img
-                      src={imageSource}
-                      alt={post.caption || "Post"}
-                      className="w-full h-full object-cover hover:opacity-90 transition-opacity"
-                      onError={(e) => {
-                        console.error("Image failed to load:", post._id);
-                        e.target.onerror = null;
-                        e.target.src = `https://ui-avatars.com/api/?name=${post.caption || 'Post'}&background=random&format=png`;
-                      }}
-                    />
-                    
-                    <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 flex items-center justify-center opacity-0 hover:opacity-100 transition-all duration-200">
-                      <div className="flex space-x-4 text-white">
-                        <div className="flex items-center">
-                          <FiHeart className="mr-1" />
-                          <span>{post.likesCount || 0}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <FiMessageCircle className="mr-1" />
-                          <span>{post.commentsCount || 0}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-10">
-            <div className="text-6xl mb-4">📷</div>
-            <h3 className="text-xl font-medium mb-2">No Posts Yet</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Share your first photo or video
-            </p>
-            <Link 
-              href="/post/new"
-              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-            >
-              Create Post
-            </Link>
-          </div>
-        )}
-      </div>
+      {/* Saved Posts */}
+      {activeTab === "saved" && (
+        <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+          <p>Saved posts will appear here</p>
+        </div>
+      )}
+      
+      {/* Edit Profile Modal */}
+      {isEditModalOpen && (
+        <EditProfileModal
+          profile={user}
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onUpdate={handleProfileUpdate}
+        />
+      )}
       
       {/* Followers Modal */}
       {showFollowers && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-md max-h-[80vh] overflow-hidden">
-            <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold">Followers</h3>
-              <button onClick={() => setShowFollowers(false)} className="text-gray-500 hover:text-gray-700">
-                <FiX size={24} />
-              </button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+              <h2 className="text-lg font-semibold">Followers</h2>
+              <button onClick={() => setShowFollowers(false)}>×</button>
             </div>
-            <div className="overflow-y-auto p-4 max-h-[calc(80vh-80px)]">
+            <div className="p-4">
               {followers.length > 0 ? (
                 followers.map(follower => (
-                  <div key={follower._id} className="flex items-center justify-between py-2">
-                    <Link 
-                      href={`/profile/${follower.username}`}
-                      className="flex items-center"
-                      onClick={() => setShowFollowers(false)}
-                    >
-                      <OptimizedImage
-                        src={follower.profilePic || `https://ui-avatars.com/api/?name=${follower.username}&background=random`}
-                        alt={follower.username}
-                        width={32}
-                        height={32}
-                        className="w-8 h-8 rounded-full object-cover mr-3"
-                      />
+                  <div key={follower.id} className="flex items-center justify-between py-2">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
+                        <OptimizedImage
+                          src={follower.profilePic || `https://ui-avatars.com/api/?name=${follower.username}&background=random`}
+                          alt={follower.username}
+                          width={40}
+                          height={40}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                       <div>
                         <div className="font-medium">{follower.username}</div>
-                        {follower.fullName && (
-                          <div className="text-sm text-gray-500 dark:text-gray-400">{follower.fullName}</div>
-                        )}
+                        <div className="text-sm text-gray-500 dark:text-gray-400">{follower.fullName}</div>
                       </div>
-                    </Link>
-                    <button 
-                      onClick={() => handleFollowUser(follower._id, follower.isFollowing)}
-                      className={`px-4 py-1 rounded-full text-sm font-medium ${
-                        follower.isFollowing
-                          ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
-                          : 'bg-blue-500 text-white hover:bg-blue-600'
-                      }`}
-                    >
-                      {follower.isFollowing ? 'Following' : 'Follow'}
-                    </button>
+                    </div>
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8 text-gray-500">
-                  No followers yet
-                </div>
+                <p className="text-center py-4 text-gray-500 dark:text-gray-400">No followers yet</p>
               )}
             </div>
           </div>
@@ -343,67 +329,40 @@ export default function Profile() {
       
       {/* Following Modal */}
       {showFollowing && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-md max-h-[80vh] overflow-hidden">
-            <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold">Following</h3>
-              <button onClick={() => setShowFollowing(false)} className="text-gray-500 hover:text-gray-700">
-                <FiX size={24} />
-              </button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+              <h2 className="text-lg font-semibold">Following</h2>
+              <button onClick={() => setShowFollowing(false)}>×</button>
             </div>
-            <div className="overflow-y-auto p-4 max-h-[calc(80vh-80px)]">
+            <div className="p-4">
               {following.length > 0 ? (
-                following.map(user => (
-                  <div key={user._id} className="flex items-center justify-between py-2">
-                    <Link 
-                      href={`/profile/${user.username}`}
-                      className="flex items-center"
-                      onClick={() => setShowFollowing(false)}
-                    >
-                      <OptimizedImage
-                        src={user.profilePic || `https://ui-avatars.com/api/?name=${user.username}&background=random`}
-                        alt={user.username}
-                        width={32}
-                        height={32}
-                        className="w-8 h-8 rounded-full object-cover mr-3"
-                      />
-                      <div>
-                        <div className="font-medium">{user.username}</div>
-                        {user.fullName && (
-                          <div className="text-sm text-gray-500 dark:text-gray-400">{user.fullName}</div>
-                        )}
+                following.map(follow => (
+                  <div key={follow.id} className="flex items-center justify-between py-2">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
+                        <OptimizedImage
+                          src={follow.profilePic || `https://ui-avatars.com/api/?name=${follow.username}&background=random`}
+                          alt={follow.username}
+                          width={40}
+                          height={40}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                    </Link>
-                    <button 
-                      onClick={() => handleFollowUser(user._id, true)}
-                      className="px-4 py-1 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
-                    >
-                      Following
-                    </button>
+                      <div>
+                        <div className="font-medium">{follow.username}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">{follow.fullName}</div>
+                      </div>
+                    </div>
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8 text-gray-500">
-                  Not following anyone yet
-                </div>
+                <p className="text-center py-4 text-gray-500 dark:text-gray-400">Not following anyone yet</p>
               )}
             </div>
           </div>
         </div>
       )}
-      
-      {/* Edit Profile Modal */}
-      <EditProfileModal
-        profile={profile}
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        onUpdate={handleProfileUpdate}
-      />
     </div>
   );
-}
-
-// Add this CSS to globals.css
-// .hide-scrollbar::-webkit-scrollbar {
-//   display: none;
-// } 
+} 

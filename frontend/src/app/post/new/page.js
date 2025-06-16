@@ -30,7 +30,7 @@ export default function CreatePost() {
       }
 
       try {
-        const res = await fetch(getApiUrl("api/users/profile"), {
+        const res = await fetch(getApiUrl("api/auth/me"), {
           headers: { Authorization: `Bearer ${token}` },
         });
         
@@ -312,31 +312,31 @@ export default function CreatePost() {
           </div>
           
           {/* Buttons */}
-          <div className="flex space-x-3 md:space-x-4 pt-2">
-            <Link
-              href="/profile"
-              className="px-3 md:px-4 py-2.5 md:py-3 rounded-md flex-1 text-center transition-colors duration-300 font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm md:text-base"
+          <div className="flex justify-between items-center mt-4">
+            <button
+              type="button"
+              onClick={() => router.push("/feed")}
+              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             >
               Cancel
-            </Link>
+            </button>
+            
             <button
               type="submit"
-              disabled={creating || !uploadedImage}
-              className={`px-3 md:px-4 py-2.5 md:py-3 rounded-md flex-1 transition-colors duration-300 font-medium bg-blue-600 text-white text-sm md:text-base ${
-                creating || !uploadedImage ? "opacity-70 cursor-not-allowed" : "hover:bg-blue-700"
+              disabled={creating || !preview}
+              className={`px-4 py-2 rounded-lg text-white font-medium ${
+                creating || !preview ? "bg-gray-400 dark:bg-gray-600 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
               }`}
             >
-              {creating ? "Creating..." : "Share Post"}
+              {creating ? "Posting..." : "Post"}
             </button>
           </div>
         </form>
         
         {message && (
-          <div 
-            className={`mt-4 p-3 rounded-md text-center ${
-              message.includes("success") ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200" : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200"
-            }`}
-          >
+          <div className={`p-3 rounded-lg text-center text-sm ${
+            message.includes("success") ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+          }`}>
             {message}
           </div>
         )}

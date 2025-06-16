@@ -18,7 +18,7 @@ export default function ClientLayout({ children }) {
   useEffect(() => {
     const handleOnline = () => {
       setIsOffline(false);
-      fetchUserProfile(); // Retry when back online
+      fetchUserInfo(); // Retry when back online
     };
     const handleOffline = () => setIsOffline(true);
     
@@ -34,7 +34,7 @@ export default function ClientLayout({ children }) {
     };
   }, []);
 
-  const fetchUserProfile = async () => {
+  const fetchUserInfo = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
       setIsLoading(false);
@@ -42,7 +42,7 @@ export default function ClientLayout({ children }) {
     }
 
     try {
-      const response = await fetch(getApiUrl("api/users/profile"), {
+      const response = await fetch(getApiUrl("api/auth/me"), {
         headers: { Authorization: `Bearer ${token}` },
       });
       
@@ -72,7 +72,7 @@ export default function ClientLayout({ children }) {
 
   useEffect(() => {
     setMounted(true);
-    fetchUserProfile();
+    fetchUserInfo();
   }, []);
 
   const toggleMobileMenu = () => {

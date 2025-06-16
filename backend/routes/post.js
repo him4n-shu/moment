@@ -325,6 +325,58 @@ router.post('/:id/comment', auth, async (req, res) => {
   }
 });
 
+// Get a single post by ID
+router.get('/:id', auth, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id)
+      .populate('user', 'username profilePic')
+      .populate('likes', 'username profilePic')
+      .populate({
+        path: 'comments',
+        populate: {
+          path: 'user',
+          select: 'username profilePic'
+        }
+      });
+    
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+    
+    res.json({
+      post: {
+        _id: post._id,
+        imageUrl: post.imageUrl,
+        imageData: post.imageData,
+        caption: post.caption,
+        likesCount: post.likes.length,
+        commentsCount: post.comments.length,
+        location: post.location,
+        isLiked: post.likes.some(like => like._id.toString() === req.user._id.toString()),
+        user: {
+          id: post.user._id,
+          username: post.user.username,
+          profilePic: post.user.profilePic || null
+        },
+        comments: post.comments.map(comment => ({
+          _id: comment._id,
+          text: comment.text,
+          createdAt: comment.date,
+          user: {
+            _id: comment.user._id,
+            username: comment.user.username,
+            profilePic: comment.user.profilePic || null
+          }
+        })),
+        createdAt: post.createdAt
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching post:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 // Delete a post
 router.delete('/:id', auth, async (req, res) => {
   try {
@@ -345,6 +397,51 @@ router.delete('/:id', auth, async (req, res) => {
   } catch (error) {
     console.error('Post deletion error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Get posts by user ID
+router.get('/user/:userId', auth, async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    
+    // Validate that the user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Get all posts from the specified user, sorted by most recent first
+    const posts = await Post.find({ user: userId })
+      .sort({ createdAt: -1 })
+      .populate('user', 'username profilePic');
+    
+    res.json({
+      success: true,
+      posts: posts.map(post => ({
+        _id: post._id,
+        imageUrl: post.imageUrl,
+        imageData: post.imageData,
+        caption: post.caption,
+        likesCount: post.likes.length,
+        commentsCount: post.comments.length,
+        location: post.location,
+        isLiked: post.likes.includes(req.user._id),
+        user: {
+          id: post.user._id,
+          username: post.user.username,
+          profilePic: post.user.profilePic || null
+        },
+        createdAt: post.createdAt
+      }))
+    });
+  } catch (error) {
+    console.error('User posts fetch error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to fetch user posts',
+      error: error.message 
+    });
   }
 });
 

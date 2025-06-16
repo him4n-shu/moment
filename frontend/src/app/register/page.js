@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { getApiUrl } from '@/utils/api';
+import OptimizedImage from '../components/OptimizedImage';
+import Image from 'next/image';
 
 export default function Register() {
   const router = useRouter();
@@ -163,33 +165,88 @@ export default function Register() {
     }
   };
 
+  const handleGoogleSignup = () => {
+    try {
+      const googleAuthUrl = getApiUrl("api/auth/google");
+      console.log("Redirecting to Google auth URL:", googleAuthUrl);
+      window.location.href = googleAuthUrl;
+    } catch (error) {
+      console.error("Error during Google authentication redirect:", error);
+      setError("Error connecting to Google authentication. Please try again.");
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-            {step === 1 ? 'Create your account' : 'Verify your email'}
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            {step === 1 ? (
-              <>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  Already have an account? <Link href="/login" className="text-blue-500 hover:text-blue-600">Sign in</Link>
-                </div>
-              </>
-            ) : (
-              'Enter the OTP sent to your email'
-            )}
-          </p>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
+      <div className="max-w-md w-full mx-auto mb-8 text-center">
+        <div className="flex justify-center mb-2">
+          <OptimizedImage
+            src="/logo.png"
+            alt="Moment Logo"
+            width={120}
+            height={120}
+            className="w-24 h-24"
+          />
         </div>
+        <h1 className="text-3xl font-bold" style={{ color: 'var(--primary)' }}>Moment</h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">Share your moments with the world</p>
+      </div>
+      
+      <div className="max-w-md w-full bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md transition-colors duration-300 card">
+        <h2 className="text-2xl font-bold text-center mb-6">
+          {step === 1 ? 'Create your account' : 'Verify your email'}
+        </h2>
+        
+        {step === 1 && (
+          <p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-6">
+            Already have an account? <Link href="/login" className="text-blue-500 hover:text-blue-600">Sign in</Link>
+          </p>
+        )}
+        
+        {step === 2 && (
+          <p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-6">
+            Enter the OTP sent to your email
+          </p>
+        )}
 
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md p-4">
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md p-4 mb-6">
             <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
           </div>
         )}
 
-        <form className="mt-8 space-y-6" onSubmit={step === 1 ? handleInitialSubmit : handleOTPSubmit}>
+        {step === 1 && (
+          <div>
+            <button
+              onClick={handleGoogleSignup}
+              className="w-full py-2 px-4 rounded-md transition-colors duration-300 flex items-center justify-center mb-4"
+              style={{ 
+                backgroundColor: 'white', 
+                color: '#333',
+                borderColor: '#ddd',
+                borderWidth: '1px',
+                borderStyle: 'solid'
+              }}
+            >
+              <Image 
+                src="/icons/google-icon.svg" 
+                alt="Google" 
+                width={18} 
+                height={18} 
+                className="mr-2" 
+              />
+              Sign up with Google
+            </button>
+            
+            <div className="my-4 flex items-center">
+              <div className="flex-grow border-t border-gray-300 dark:border-gray-700"></div>
+              <span className="mx-4 text-sm text-gray-500 dark:text-gray-400">OR</span>
+              <div className="flex-grow border-t border-gray-300 dark:border-gray-700"></div>
+            </div>
+          </div>
+        )}
+
+        <form className="space-y-4" onSubmit={step === 1 ? handleInitialSubmit : handleOTPSubmit}>
           {step === 1 ? (
             <>
               <div className="space-y-4">

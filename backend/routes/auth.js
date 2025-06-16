@@ -38,6 +38,30 @@ router.get('/google/callback',
   }
 );
 
+// Get current user's basic info
+router.get('/me', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password -otp');
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        profilePic: user.profilePic,
+        fullName: user.fullName
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching user info:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 // Generate OTP
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
