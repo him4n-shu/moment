@@ -154,20 +154,31 @@ router.post('/follow/:userId', auth, async (req, res) => {
 // Get user's followers
 router.get('/followers/:userId', auth, async (req, res) => {
   try {
+    // Fetch user with followers, but also populate the followers' followers field
     const user = await User.findById(req.params.userId)
-      .populate('followers', 'username profilePic fullName');
+      .populate({
+        path: 'followers',
+        select: 'username profilePic fullName followers',
+      });
     
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const followers = user.followers.map(follower => ({
-      id: follower._id,
-      username: follower.username,
-      profilePic: follower.profilePic,
-      fullName: follower.fullName,
-      isFollowing: follower.followers.includes(req.user._id)
-    }));
+    const followers = user.followers.map(follower => {
+      // Safely check if the current user is following this follower
+      const isFollowing = follower.followers && 
+        Array.isArray(follower.followers) && 
+        follower.followers.some(id => id.toString() === req.user._id.toString());
+      
+      return {
+        id: follower._id,
+        username: follower.username,
+        profilePic: follower.profilePic,
+        fullName: follower.fullName,
+        isFollowing: !!isFollowing
+      };
+    });
 
     res.json({ followers });
   } catch (error) {
@@ -179,20 +190,32 @@ router.get('/followers/:userId', auth, async (req, res) => {
 // Get user's following
 router.get('/following/:userId', auth, async (req, res) => {
   try {
+    // Fetch user with following, and also populate the followers field for each followed user
     const user = await User.findById(req.params.userId)
-      .populate('following', 'username profilePic fullName');
+      .populate({
+        path: 'following',
+        select: 'username profilePic fullName followers',
+      });
     
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const following = user.following.map(followed => ({
-      id: followed._id,
-      username: followed.username,
-      profilePic: followed.profilePic,
-      fullName: followed.fullName,
-      isFollowing: true // Since these are users we're following
-    }));
+    const following = user.following.map(followed => {
+      // Check if the current user is actually following this user
+      // (This should always be true, but we add the safety check for consistency)
+      const isFollowing = followed.followers && 
+        Array.isArray(followed.followers) && 
+        followed.followers.some(id => id.toString() === req.user._id.toString());
+      
+      return {
+        id: followed._id,
+        username: followed.username,
+        profilePic: followed.profilePic,
+        fullName: followed.fullName,
+        isFollowing: !!isFollowing
+      };
+    });
 
     res.json({ following });
   } catch (error) {

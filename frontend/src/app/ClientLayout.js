@@ -42,15 +42,15 @@ function SocketStatusBanner() {
       {isOffline ? (
         <>
           <FiWifiOff className="mr-2" />
-          <span>You are currently offline. Some features may be unavailable.</span>
+          <span className="text-sm">You are currently offline. Some features may be unavailable.</span>
         </>
       ) : !isConnected ? (
         <>
           <FiWifi className="mr-2" />
-          <span>Connection to server lost. {reconnectAttempts > 0 ? `Retrying (${reconnectAttempts})...` : 'Reconnecting...'}</span>
+          <span className="text-sm">Connection to server lost. {reconnectAttempts > 0 ? `Retrying (${reconnectAttempts})...` : 'Reconnecting...'}</span>
           <button 
             onClick={reconnect}
-            className="ml-2 bg-white text-orange-500 rounded-full p-1 hover:bg-orange-100 transition-colors"
+            className="ml-2 bg-white text-orange-500 rounded-full p-1 hover:bg-orange-100 transition-colors touch-target"
             aria-label="Reconnect manually"
           >
             <FiRefreshCw />
@@ -66,6 +66,7 @@ function LayoutWithSocket({ children, isAuthPage }) {
   const [user, setUser] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const pathname = usePathname();
   
   const fetchUserInfo = async () => {
     const token = localStorage.getItem("token");
@@ -103,6 +104,11 @@ function LayoutWithSocket({ children, isAuthPage }) {
     fetchUserInfo();
   }, []);
 
+  // Close mobile menu when navigating to a new page
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
@@ -117,7 +123,7 @@ function LayoutWithSocket({ children, isAuthPage }) {
           <main>
             {isLoading ? (
               <div className="flex justify-center items-center min-h-[50vh]">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+                <div className="w-12 h-12 rounded-full border-4 border-t-[#FF6B6B] border-r-[#FF8E53] border-b-[#FFD166] border-l-transparent animate-spin"></div>
               </div>
             ) : children}
           </main>
@@ -132,7 +138,7 @@ function LayoutWithSocket({ children, isAuthPage }) {
       <SocketStatusBanner />
       
       {/* Desktop Sidebar - hidden on mobile */}
-      <div className="hidden md:block">
+      <div className="hidden md:block sticky-element top-0 h-screen">
         <Sidebar />
       </div>
       
@@ -143,16 +149,20 @@ function LayoutWithSocket({ children, isAuthPage }) {
       
       <div className="flex-1 md:ml-16 min-h-screen transition-colors duration-300 mt-14 md:mt-0" style={{ backgroundColor: 'var(--background)' }}>
         {/* Desktop Navbar */}
-        <div className="hidden md:block">
+        <div className="hidden md:block sticky-element top-0 z-10">
           <Navbar />
         </div>
         
-        <main className="container mx-auto px-2 sm:px-4 pb-16 md:pb-4">
+        <main className="container mx-auto px-3 sm:px-4 lg:px-6 pb-24 md:pb-6">
           {isLoading ? (
             <div className="flex justify-center items-center min-h-[50vh]">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+              <div className="w-12 h-12 rounded-full border-4 border-t-[#FF6B6B] border-r-[#FF8E53] border-b-[#FFD166] border-l-transparent animate-spin"></div>
             </div>
-          ) : children}
+          ) : (
+            <div className="pt-2 md:pt-4">
+              {children}
+            </div>
+          )}
         </main>
       </div>
     </div>
@@ -172,11 +182,24 @@ export default function ClientLayout({ children }) {
       mirror: true,
       offset: 50,
       easing: 'ease-in-out',
+      disable: window.innerWidth < 640 // Disable animations on mobile for better performance
     });
   }, []);
 
+  // Handle dark mode and initial mount
   useEffect(() => {
     setMounted(true);
+    
+    // Add viewport height fix for mobile browsers
+    const setVh = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+    
+    setVh();
+    window.addEventListener('resize', setVh);
+    
+    return () => window.removeEventListener('resize', setVh);
   }, []);
 
   if (!mounted) return null;

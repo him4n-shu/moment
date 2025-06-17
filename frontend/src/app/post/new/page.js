@@ -20,6 +20,7 @@ export default function CreatePost() {
   const [message, setMessage] = useState("");
   const [uploadedImage, setUploadedImage] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [postSuccess, setPostSuccess] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -193,9 +194,10 @@ export default function CreatePost() {
       
       if (response.ok) {
         setMessage("Post created successfully!");
+        setPostSuccess(true);
         setTimeout(() => {
           router.push("/feed");
-        }, 1500);
+        }, 2000);
       } else {
         setMessage(data.message || "Error creating post");
       }
@@ -210,136 +212,163 @@ export default function CreatePost() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <div className="relative">
+          <div className="w-16 h-16 rounded-full border-4 border-t-[#FF6B6B] border-r-[#FF8E53] border-b-[#FFD166] border-l-transparent animate-spin"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-white dark:bg-gray-800"></div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="max-w-2xl mx-auto pt-4 md:pt-8 px-3 md:px-4 pb-12">
-      <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-lg">
-        <h1 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-center text-gray-900 dark:text-white">Create Post</h1>
+      <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700">
+        <div className="mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-center bg-gradient-to-r from-[#FF6B6B] to-[#FF8E53] text-transparent bg-clip-text">Create New Post</h1>
+          <div className="w-16 h-1 bg-gradient-to-r from-[#FF6B6B] to-[#FF8E53] mx-auto mt-2 rounded-full"></div>
+        </div>
         
-        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5 md:space-y-6">
           {/* Image Upload Section */}
           <div>
             {!preview ? (
               <div 
-                className={`border-2 border-dashed rounded-lg p-4 md:p-8 text-center ${
+                className={`border-2 border-dashed rounded-lg p-5 md:p-8 text-center transition-all duration-300 ${
                   isDragging 
-                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20" 
-                    : "border-gray-300 dark:border-gray-600"
+                    ? "border-[#FF6B6B] bg-[#FF6B6B]/5 dark:bg-[#FF6B6B]/10" 
+                    : "border-gray-300 dark:border-gray-600 hover:border-[#FF8E53] hover:bg-[#FF8E53]/5 dark:hover:bg-[#FF8E53]/10"
                 }`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
               >
                 <div className="flex flex-col items-center">
-                  <FiImage className="h-10 w-10 md:h-12 md:w-12 text-gray-700 dark:text-gray-300 mb-2 md:mb-3" />
-                  <p className="text-sm font-medium mb-2 text-gray-900 dark:text-white">Drag and drop your image here</p>
-                  <p className="text-xs text-gray-700 dark:text-gray-400 mb-3 md:mb-4">
-                    Supported formats: JPG, PNG, GIF (max 5MB)
-                  </p>
-                  <p className="text-sm text-center mb-3 md:mb-4 text-gray-900 dark:text-white">- OR -</p>
-                  <div>
-                    <button
-                      type="button"
-                      onClick={handleFileInputClick}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 md:py-3 px-4 md:px-6 rounded-md shadow-md inline-flex items-center text-sm md:text-base"
-                    >
-                      <FiUpload className="mr-2" />
-                      <span>Select from computer</span>
-                    </button>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      className="hidden"
-                    />
+                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-r from-[#FF6B6B]/20 to-[#FF8E53]/20 flex items-center justify-center mb-4 animate-pulse">
+                    <FiImage className="h-8 w-8 md:h-10 md:w-10 text-[#FF6B6B]" />
                   </div>
+                  <p className="text-lg md:text-xl font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Drag & Drop your image here
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    or click to browse (max 5MB)
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleFileInputClick}
+                    className="px-4 py-2 md:px-6 md:py-3 bg-gradient-to-r from-[#FF6B6B] to-[#FF8E53] text-white rounded-lg hover:shadow-md transition-all duration-300 text-sm md:text-base touch-target"
+                  >
+                    Choose Image
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
                 </div>
               </div>
             ) : (
-              <div className="relative">
-                <div className="aspect-square max-h-80 md:max-h-96 overflow-hidden rounded-lg">
-                  <OptimizedImage
-                    src={preview}
-                    alt="Post preview"
-                    width={800}
-                    height={600}
-                    className="max-h-[400px] w-auto mx-auto"
-                  />
+              <div className="relative rounded-lg overflow-hidden">
+                <img 
+                  src={preview} 
+                  alt="Preview" 
+                  className="w-full h-auto max-h-[400px] object-contain bg-gray-100 dark:bg-gray-700 rounded-lg"
+                />
+                <div className="absolute top-2 right-2">
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="p-2 bg-white dark:bg-gray-800 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors touch-target"
+                    aria-label="Remove image"
+                  >
+                    <FiX className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleRemoveImage}
-                  className="absolute top-2 right-2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-colors duration-300"
-                >
-                  <FiX />
-                </button>
+              </div>
+            )}
+            
+            {message && (
+              <div className={`mt-3 text-center ${message.includes('success') ? 'text-green-500' : 'text-red-500'}`}>
+                {message}
               </div>
             )}
           </div>
           
           {/* Caption Input */}
           <div>
-            <label className="block text-sm font-medium mb-1 text-gray-900 dark:text-white">Caption</label>
+            <label htmlFor="caption" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Caption
+            </label>
             <textarea
+              id="caption"
               name="caption"
               value={form.caption}
               onChange={handleTextChange}
               placeholder="Write a caption..."
-              rows={4}
-              className="w-full p-3 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
+              rows="3"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF8E53] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-base"
+            ></textarea>
           </div>
           
           {/* Location Input */}
           <div>
-            <label className="inline-flex items-center text-sm font-medium mb-1 text-gray-900 dark:text-white">
-              <FiMapPin className="mr-1 text-gray-900 dark:text-white" />
-              <span>Location (optional)</span>
+            <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Location (optional)
             </label>
-            <input
-              type="text"
-              name="location"
-              value={form.location}
-              onChange={handleTextChange}
-              placeholder="Add location"
-              className="w-full p-3 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FiMapPin className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                id="location"
+                name="location"
+                value={form.location}
+                onChange={handleTextChange}
+                placeholder="Add location"
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF8E53] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-base"
+              />
+            </div>
           </div>
           
-          {/* Buttons */}
-          <div className="flex justify-between items-center mt-4">
-            <button
-              type="button"
-              onClick={() => router.push("/feed")}
-              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-            >
-              Cancel
-            </button>
-            
+          {/* Submit Button */}
+          <div className="pt-2">
             <button
               type="submit"
-              disabled={creating || !preview}
-              className={`px-4 py-2 rounded-lg text-white font-medium ${
-                creating || !preview ? "bg-gray-400 dark:bg-gray-600 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+              disabled={creating || !uploadedImage}
+              className={`w-full py-3 rounded-lg text-white text-base md:text-lg font-medium transition-all duration-300 ${
+                creating || !uploadedImage
+                  ? "bg-gray-400 dark:bg-gray-600 cursor-not-allowed"
+                  : "bg-gradient-to-r from-[#FF6B6B] to-[#FF8E53] hover:shadow-lg transform hover:-translate-y-0.5"
               }`}
             >
-              {creating ? "Posting..." : "Post"}
+              {creating ? (
+                <div className="flex items-center justify-center">
+                  <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
+                  Creating Post...
+                </div>
+              ) : (
+                "Share Post"
+              )}
             </button>
           </div>
+          
+          {postSuccess && (
+            <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+              <div className="flex items-center">
+                <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-800 flex items-center justify-center mr-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-500 dark:text-green-200" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <p className="text-green-700 dark:text-green-200">Post created successfully! Redirecting...</p>
+              </div>
+            </div>
+          )}
         </form>
-        
-        {message && (
-          <div className={`p-3 rounded-lg text-center text-sm ${
-            message.includes("success") ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
-          }`}>
-            {message}
-          </div>
-        )}
       </div>
     </div>
   );
