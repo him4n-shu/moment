@@ -167,7 +167,7 @@ export default function NotificationBell() {
         <FiBell className="w-6 h-6" />
         {unreadCount > 0 && (
           <span 
-            className={`absolute top-0 right-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full transition-transform duration-200 ${
+            className={`absolute top-0 right-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-brand-gradient rounded-full transition-transform duration-200 ${
               isAnimating ? 'animate-bounce' : ''
             }`}
           >
@@ -183,7 +183,7 @@ export default function NotificationBell() {
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="text-sm text-blue-500 hover:text-blue-600 dark:hover:text-blue-400"
+                className="text-sm text-brand-orange hover:text-brand-red dark:hover:text-brand-yellow"
               >
                 Mark all as read
               </button>
@@ -197,7 +197,7 @@ export default function NotificationBell() {
                   key={notification._id}
                   onClick={() => markAsRead(notification._id)}
                   className={`p-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors duration-200 ${
-                    !notification.read ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                    !notification.read ? 'bg-brand-red/10 dark:bg-brand-red/20' : ''
                   }`}
                 >
                   <div className="flex items-start space-x-3">

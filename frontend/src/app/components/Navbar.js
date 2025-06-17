@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import SearchUsers from "./SearchUsers";
 import { FiBell, FiHome, FiPlusSquare, FiMessageCircle, FiSettings, FiLogOut, FiLogIn, FiUserPlus, FiWifiOff, FiAlertCircle, FiUser } from "react-icons/fi";
 import NotificationBell from './NotificationBell';
+import MessageNotification from './MessageNotification';
+import FeedNotification from './FeedNotification';
+import Image from 'next/image';
 
 export default function Navbar() {
   const [user, setUser] = useState(null);
@@ -113,13 +116,26 @@ export default function Navbar() {
   };
   
   return (
-    <nav className="sticky top-0 z-50 shadow-md transition-colors duration-300" style={{ backgroundColor: 'var(--navbar-bg)', color: 'var(--navbar-text)', borderBottom: '1px solid var(--navbar-border)' }}>
+    <nav className="sticky top-0 z-50 shadow-md transition-colors duration-300 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo and Brand */}
           <div className="flex items-center">
-            <Link href="/" className="flex-shrink-0">
-              <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--primary)' }}>Moment</h1>
+            <Link href="/" className="flex-shrink-0 flex items-center">
+              <Image 
+                src="/logos/m-logo.svg" 
+                alt="M Logo" 
+                width={32} 
+                height={32} 
+                className="h-8 w-auto mr-2"
+              />
+              <Image 
+                src="/logos/text-logo.svg" 
+                alt="Moment" 
+                width={120} 
+                height={40} 
+                className="h-8 w-auto hidden sm:block"
+              />
             </Link>
             
             {/* Status indicators */}
@@ -143,15 +159,11 @@ export default function Navbar() {
           
           {/* Right Navigation Items */}
           <div className="hidden md:flex space-x-1">
-            <Link href="/" className="text-gray-600 dark:text-gray-300 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200" style={{ ':hover': { color: 'var(--primary)' } }}>
-              <FiHome className="h-5 w-5" />
-            </Link>
-            <Link href="/post/new" className="text-gray-600 dark:text-gray-300 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200" style={{ ':hover': { color: 'var(--primary)' } }}>
+            <FeedNotification />
+            <Link href="/post/new" className="text-gray-600 dark:text-gray-300 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 hover:text-brand-red">
               <FiPlusSquare className="h-5 w-5" />
             </Link>
-            <Link href="/messages" className="text-gray-600 dark:text-gray-300 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200" style={{ ':hover': { color: 'var(--primary)' } }}>
-              <FiMessageCircle className="h-5 w-5" />
-            </Link>
+            <MessageNotification />
           </div>
           
           {/* Notification Bell */}
@@ -178,7 +190,7 @@ export default function Navbar() {
                 <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
                   <Link
                     href="/profile"
-                    className="inline-flex w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 items-center"
+                    className="inline-flex w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 items-center hover:text-brand-red"
                     onClick={() => setShowUserMenu(false)}
                   >
                     <FiUser className="mr-2" />
@@ -186,7 +198,7 @@ export default function Navbar() {
                   </Link>
                   <Link
                     href="/settings"
-                    className="inline-flex w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 items-center"
+                    className="inline-flex w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 items-center hover:text-brand-red"
                     onClick={() => setShowUserMenu(false)}
                   >
                     <FiSettings className="mr-2" />
@@ -197,7 +209,7 @@ export default function Navbar() {
                       setShowUserMenu(false);
                       handleLogout();
                     }}
-                    className="inline-flex w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 items-center"
+                    className="inline-flex w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 items-center hover:text-brand-red"
                   >
                     <FiLogOut className="mr-2" />
                     Sign out

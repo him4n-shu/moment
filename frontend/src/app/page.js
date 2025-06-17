@@ -67,6 +67,17 @@ export default function Home() {
           throw new Error(postsData.message || "Failed to fetch posts");
         }
         
+        // Log the first post to help with debugging
+        if (postsData.posts && postsData.posts.length > 0) {
+          console.log("Home page - Sample post data:", {
+            id: postsData.posts[0]._id,
+            hasImageUrl: !!postsData.posts[0].imageUrl,
+            hasImageData: !!postsData.posts[0].imageData,
+            imageUrlSample: postsData.posts[0].imageUrl ? postsData.posts[0].imageUrl.substring(0, 50) + '...' : 'none',
+            imageDataSample: postsData.posts[0].imageData ? postsData.posts[0].imageData.substring(0, 50) + '...' : 'none'
+          });
+        }
+        
         setPosts(postsData.posts.map(post => ({
           ...post,
           likesCount: post.likesCount || 0,
@@ -333,13 +344,12 @@ export default function Home() {
               </div>
               
               {/* Post Image */}
-              <div className="relative aspect-square w-full bg-black">
+              <div className="post-image-container">
                 <OptimizedImage
-                  src={post.imageData || post.imageUrl}
-                  alt={post.caption}
-                  width={800}
-                  height={600}
-                  className="w-full h-full object-contain"
+                  src={post.imageData || post.imageUrl || post.image}
+                  alt={post.caption || `${post.user.username}'s post`}
+                  width={400}
+                  height={400}
                 />
               </div>
               

@@ -7,6 +7,44 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const Notification = require('../models/Notification');
+const sharp = require('sharp');
+
+// Helper function to resize base64 image
+const resizeBase64Image = async (base64Str, maxWidth = 800, maxHeight = 800) => {
+  if (!base64Str || typeof base64Str !== 'string' || !base64Str.startsWith('data:')) {
+    return base64Str; // Return original if not valid
+  }
+
+  try {
+    // Extract the content type and base64 data
+    const matches = base64Str.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    if (!matches || matches.length !== 3) {
+      return base64Str; // Return original if format is incorrect
+    }
+
+    const contentType = matches[1];
+    const base64Data = matches[2];
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    // Resize the image with sharp
+    const resizedBuffer = await sharp(buffer)
+      .resize({
+        width: maxWidth,
+        height: maxHeight,
+        fit: 'inside',
+        withoutEnlargement: true
+      })
+      .jpeg({ quality: 80 })
+      .toBuffer();
+
+    // Convert back to base64
+    const resizedBase64 = `data:image/jpeg;base64,${resizedBuffer.toString('base64')}`;
+    return resizedBase64;
+  } catch (error) {
+    console.error('Error resizing image:', error);
+    return base64Str; // Return original on error
+  }
+};
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -49,10 +87,16 @@ router.post('/', auth, async (req, res) => {
     // Generate a placeholder URL if only image data is provided
     const finalImageUrl = imageUrl || `data:image/placeholder;base64,${Date.now()}`;
     
+    // Resize image data if it's a base64 string
+    let processedImageData = imageData;
+    if (imageData && typeof imageData === 'string' && imageData.startsWith('data:')) {
+      processedImageData = await resizeBase64Image(imageData, 800, 800);
+    }
+    
     const newPost = new Post({
       user: req.user._id,
       imageUrl: finalImageUrl,
-      imageData: imageData || '', // Store base64 image data directly in the database
+      imageData: processedImageData || '', // Store resized base64 image data
       caption: caption || '',
       location: location || ''
     });
@@ -88,14 +132,22 @@ router.post('/upload', auth, upload.single('image'), async (req, res) => {
     // Get the file path relative to uploads directory
     const filePath = req.file.path;
     
-    // Read the file as binary data
-    const imageBuffer = fs.readFileSync(filePath);
+    // Resize the uploaded image
+    const resizedImageBuffer = await sharp(filePath)
+      .resize({
+        width: 800,
+        height: 800,
+        fit: 'inside',
+        withoutEnlargement: true
+      })
+      .jpeg({ quality: 80 })
+      .toBuffer();
     
-    // Convert the binary data to base64
-    const base64Image = imageBuffer.toString('base64');
+    // Convert the resized image to base64
+    const base64Image = resizedImageBuffer.toString('base64');
     
     // Get the file type
-    const fileType = req.file.mimetype;
+    const fileType = 'image/jpeg'; // We're converting to JPEG
     
     // Create a data URL from the base64 string
     const imageDataUrl = `data:${fileType};base64,${base64Image}`;
@@ -109,7 +161,7 @@ router.post('/upload', auth, upload.single('image'), async (req, res) => {
     const newPost = new Post({
       user: req.user._id,
       imageUrl: imageUrl, // Keep this for backward compatibility or as a fallback
-      imageData: imageDataUrl, // Store the image data directly in the database
+      imageData: imageDataUrl, // Store the resized image data directly in the database
       caption: req.body.caption || '',
       location: req.body.location || ''
     });
@@ -163,28 +215,39 @@ router.get('/feed', auth, async (req, res) => {
         }
       });
     
+    // Log the first post for debugging
+    if (posts.length > 0) {
+      console.log('Feed API - First post info:', {
+        id: posts[0]._id,
+        hasImage: !!posts[0].imageUrl,
+        hasImageData: !!posts[0].imageData,
+        imageUrlLength: posts[0].imageUrl ? posts[0].imageUrl.length : 0,
+        imageDataLength: posts[0].imageData ? posts[0].imageData.length : 0
+      });
+    }
+    
     res.json({
       success: true,
       posts: posts.map(post => ({
         _id: post._id,
         imageUrl: post.imageUrl,
-        imageData: post.imageData,
+        imageData: post.imageData, // Ensure imageData is included
         caption: post.caption,
         likesCount: post.likes.length,
         commentsCount: post.comments.length,
         location: post.location,
         isLiked: post.likes.some(like => like._id.toString() === req.user._id.toString()),
         user: {
-          id: post.user._id,
+          _id: post.user._id,
           username: post.user.username,
           profilePic: post.user.profilePic || null
         },
         comments: post.comments.map(comment => ({
-          id: comment._id,
+          _id: comment._id,
           text: comment.text,
           date: comment.date,
           user: {
-            id: comment.user._id,
+            _id: comment.user._id,
             username: comment.user.username,
             profilePic: comment.user.profilePic || null
           }
@@ -196,8 +259,8 @@ router.get('/feed', auth, async (req, res) => {
     console.error('Feed fetch error:', error);
     res.status(500).json({ 
       success: false,
-      message: 'Failed to fetch feed',
-      error: error.message 
+      message: 'Server error',
+      error: error.message
     });
   }
 });

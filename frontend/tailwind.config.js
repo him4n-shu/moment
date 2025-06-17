@@ -7,10 +7,20 @@ module.exports = {
   ],
   theme: {
     extend: {
+      colors: {
+        'brand': {
+          'red': '#FF6B6B',
+          'orange': '#FF8E53',
+          'yellow': '#FFD166',
+        },
+      },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic':
           'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+        'brand-gradient': 'linear-gradient(to right, #FF6B6B, #FF8E53, #FFD166)',
+        'brand-gradient-vertical': 'linear-gradient(to bottom, #FF6B6B, #FF8E53, #FFD166)',
+        'brand-gradient-hover': 'linear-gradient(to right, #FF5B5B, #FF7E43, #FFC156)',
       },
       keyframes: {
         bounce: {

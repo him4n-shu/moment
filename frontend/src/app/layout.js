@@ -7,6 +7,15 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata = {
   title: "Moment",
   description: "Connect and share moments with friends",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: ["/favicon.svg"],
+    apple: [
+      { url: "/favicon.svg" },
+    ],
+  },
 };
 
 export const viewport = {

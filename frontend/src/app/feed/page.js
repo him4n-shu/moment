@@ -57,6 +57,17 @@ export default function Feed() {
       const data = await response.json();
       
       if (data.posts) {
+        // Log the first post to help with debugging
+        if (data.posts.length > 0) {
+          console.log("Sample post data:", {
+            id: data.posts[0]._id,
+            hasImageUrl: !!data.posts[0].imageUrl,
+            hasImageData: !!data.posts[0].imageData,
+            imageUrlSample: data.posts[0].imageUrl ? data.posts[0].imageUrl.substring(0, 50) + '...' : 'none',
+            imageDataSample: data.posts[0].imageData ? data.posts[0].imageData.substring(0, 50) + '...' : 'none'
+          });
+        }
+        
         // Ensure each post has the required fields
         const processedPosts = data.posts.map(post => ({
           ...post,
@@ -304,7 +315,7 @@ export default function Feed() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-red"></div>
       </div>
     );
   }
@@ -315,7 +326,7 @@ export default function Feed() {
         <div className="bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-200 p-4 rounded-lg">
           <p>{error}</p>
           {!localStorage.getItem("token") && (
-            <Link href="/login" className="mt-2 inline-block text-blue-600 dark:text-blue-400 hover:underline">
+            <Link href="/login" className="mt-2 inline-block text-brand-orange hover:text-brand-red hover:underline">
               Login to view the feed
             </Link>
           )}
@@ -325,209 +336,191 @@ export default function Feed() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto pt-4 md:pt-8 px-3 md:px-6 pb-20">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-2">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Global Feed</h1>
-        <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto">
-          <button 
-            onClick={handleManualRefresh} 
-            disabled={refreshing}
-            className="flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
-          >
-            <FiRefreshCw className={`mr-1 ${refreshing ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
-          </button>
-          <span className="ml-3 text-xs text-gray-500 dark:text-gray-500">
-            Updated {formatLastRefresh()}
-          </span>
-        </div>
+    <div className="max-w-xl mx-auto py-6 px-4 sm:px-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-brand-red" data-aos="fade-right">Your Feed</h1>
+        <button 
+          onClick={handleManualRefresh} 
+          className="flex items-center text-sm text-gray-600 hover:text-brand-orange dark:text-gray-400 dark:hover:text-brand-yellow"
+          disabled={refreshing}
+          data-aos="fade-left"
+        >
+          <FiRefreshCw className={`mr-1 ${refreshing ? 'animate-spin' : ''}`} />
+          {refreshing ? 'Refreshing...' : 'Refresh'}
+        </button>
       </div>
-
-      {posts.length === 0 ? (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center">
-          <p className="text-gray-700 dark:text-gray-300 mb-4">No posts available yet.</p>
-          <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-            Follow some users to see their posts in your feed, or check back later for new content.
+      
+      <div className="text-sm text-gray-500 mb-6" data-aos="fade-up">
+        Last updated: {formatLastRefresh()}
+      </div>
+      
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 p-4 rounded-md mb-6" data-aos="fade-in">
+          <p className="text-red-600 dark:text-red-400">{error}</p>
+        </div>
+      )}
+      
+      {loading ? (
+        <div className="flex justify-center items-center py-12" data-aos="fade-in">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-red"></div>
+        </div>
+      ) : posts.length === 0 ? (
+        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-md" data-aos="fade-up">
+          <h2 className="text-xl font-semibold mb-2">No posts yet</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Your feed is empty. Follow some users to see their posts here.
           </p>
-          <Link href="/friends" className="inline-block px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
-            Find People to Follow
+          <Link 
+            href="/friends" 
+            className="inline-block px-4 py-2 bg-brand-gradient text-white rounded-md hover:bg-brand-gradient-hover transition-colors"
+          >
+            Find Friends
           </Link>
         </div>
       ) : (
-        <div className="space-y-6">
-          {posts.map((post) => (
-            <div key={post._id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg">
-              {/* Post Header */}
-              <div className="flex items-center justify-between p-3">
-                <div className="flex items-center">
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 rounded-full overflow-hidden mr-3">
-                      <Link href={`/profile/${post.user.username}`}>
-                        <OptimizedImage
-                          src={post.user.profilePic || `https://ui-avatars.com/api/?name=${post.user.username}&background=random`}
-                          alt={post.user.username}
-                          width={40}
-                          height={40}
-                          className="h-full w-full object-cover"
-                        />
-                      </Link>
+        <div className="space-y-4">
+          {posts.map((post, index) => (
+            <div 
+              key={post._id} 
+              className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300"
+              data-aos="fade-up"
+              data-aos-delay={index * 100}
+              data-aos-anchor-placement="top-bottom"
+            >
+              <div className="p-3">
+                <div className="flex items-center mb-2">
+                  <Link href={`/profile/${post.user.username}`} className="flex items-center">
+                    <div className="w-8 h-8 rounded-full overflow-hidden mr-2">
+                      <OptimizedImage
+                        src={post.user.profilePic || `/default-avatar.png`}
+                        alt={post.user.username}
+                        width={32}
+                        height={32}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                    <div className="font-bold mr-2">
-                      <Link 
-                        href={`/profile/${post.user.username}`}
-                        className="hover:text-blue-500 transition-colors"
-                      >
-                        {post.user.username}
-                      </Link>
+                    <div>
+                      <div className="font-medium">{post.user.username}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {formatDate(post.createdAt)}
+                      </div>
                     </div>
-                  </div>
-                  <span className="text-gray-500 dark:text-gray-400 text-sm">
-                    • {formatDate(post.createdAt)}
-                  </span>
+                  </Link>
+                  <button className="ml-auto text-gray-500 hover:text-brand-orange dark:text-gray-400 dark:hover:text-brand-yellow">
+                    <FiMoreHorizontal />
+                  </button>
                 </div>
                 
-                <button className="text-gray-500 dark:text-gray-400 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
-                  <FiMoreHorizontal />
-                </button>
-              </div>
-              
-              {/* Post Image */}
-              <div className="relative">
-                <img
-                  src={post.imageData || post.imageUrl || `https://ui-avatars.com/api/?name=${post.caption || 'Post'}&background=random&format=png`}
-                  alt={post.caption || "Post image"}
-                  className="w-full h-auto max-h-[600px] object-contain bg-black rounded-lg"
-                  onError={(e) => {
-                    console.error("Image failed to load:", post.imageUrl);
-                    e.target.onerror = null;
-                    e.target.src = `https://ui-avatars.com/api/?name=${post.caption || 'Post'}&background=random&format=png`;
-                  }}
-                />
-              </div>
-              
-              {/* Post Actions */}
-              <div className="flex justify-between p-3 border-b border-gray-200 dark:border-gray-700">
-                <div className="flex space-x-4">
-                  <button 
-                    onClick={() => handleLike(post._id)}
-                    className="flex items-center text-gray-700 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition-colors duration-200"
-                  >
-                    {post.isLiked ? (
-                      <FaHeart className="h-6 w-6 fill-red-500 text-red-500" />
-                    ) : (
-                      <FiHeart className="h-6 w-6" />
-                    )}
-                    <span className="ml-1 text-sm">{post.likesCount || 0}</span>
-                  </button>
-                  <button 
-                    onClick={() => toggleComments(post._id)}
-                    className="flex items-center text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition-colors duration-200"
-                  >
-                    <FiMessageCircle className="h-6 w-6" />
-                    <span className="ml-1 text-sm">{post.commentsCount || 0}</span>
-                  </button>
-                  <button className="text-gray-700 dark:text-gray-300 hover:text-yellow-500 dark:hover:text-yellow-400 transition-colors duration-200">
-                    <FiBookmark className="h-6 w-6" />
+                <p className="mb-3 text-sm">{post.caption}</p>
+                
+                {(post.imageUrl || post.imageData || post.image) && (
+                  <div className="mb-4 post-image-container" data-aos="zoom-in" data-aos-delay={(index * 100) + 100}>
+                    <OptimizedImage
+                      src={post.imageData || post.imageUrl || post.image}
+                      alt={`${post.user.username}'s post`}
+                      width={400}
+                      height={400}
+                    />
+                  </div>
+                )}
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex space-x-4">
+                    <button 
+                      onClick={() => handleLike(post._id)} 
+                      className={`flex items-center ${post.isLiked ? 'text-brand-red' : 'text-gray-500 hover:text-brand-red'}`}
+                      data-aos="fade-right"
+                      data-aos-delay={(index * 100) + 150}
+                    >
+                      {post.isLiked ? <FaHeart className="mr-1" /> : <FiHeart className="mr-1" />}
+                      <span>{post.likesCount}</span>
+                    </button>
+                    <button 
+                      onClick={() => toggleComments(post._id)} 
+                      className="flex items-center text-gray-500 hover:text-brand-orange"
+                      data-aos="fade-right"
+                      data-aos-delay={(index * 100) + 200}
+                    >
+                      <FiMessageCircle className="mr-1" />
+                      <span>{post.commentsCount}</span>
+                    </button>
+                  </div>
+                  <button className="text-gray-500 hover:text-brand-yellow">
+                    <FiBookmark />
                   </button>
                 </div>
-                <button className="text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400">
-                  <FiBookmark className="h-6 w-6" />
-                </button>
-              </div>
-              
-              {/* Post Caption */}
-              <div className="p-3 text-sm text-gray-800 dark:text-gray-200">
-                <p>
-                  {post.caption}
-                </p>
-              </div>
-              
-              {/* Post Date */}
-              <div className="px-3 pb-3 text-xs text-gray-500 dark:text-gray-400">
-                {new Date(post.createdAt).toLocaleDateString()}
-              </div>
-              
-              {/* Comments Section - Conditionally shown */}
-              {activeCommentPostId === post._id && (
-                <div className="p-3 border-t border-gray-200 dark:border-gray-700">
-                  <div className="mb-4">
-                    <form onSubmit={(e) => {
-                      e.preventDefault();
-                      handleComment(post._id);
-                    }} className="flex">
-                      <input
-                        type="text"
-                        value={commentInputs[post._id] || ''}
-                        onChange={(e) => setCommentInputs(prev => ({ ...prev, [post._id]: e.target.value }))}
-                        placeholder="Add a comment..."
-                        className="flex-grow p-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                      <button
-                        type="submit"
-                        disabled={!commentInputs[post._id]?.trim()}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-r-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Post
-                      </button>
-                    </form>
-                  </div>
-                  
-                  {/* Comments List */}
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {loadingComments[post._id] ? (
-                      <div className="flex justify-center py-2">
-                        <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-primary"></div>
-                      </div>
-                    ) : commentErrors[post._id] ? (
-                      <div className="text-center text-red-500 dark:text-red-400 text-sm py-2">
-                        {commentErrors[post._id]}
-                        <button 
-                          onClick={() => fetchComments(post._id)} 
-                          className="ml-2 text-blue-500 hover:underline"
+                
+                {likeErrors[post._id] && (
+                  <div className="mt-2 text-sm text-red-500">{likeErrors[post._id]}</div>
+                )}
+                
+                {activeCommentPostId === post._id && (
+                  <div className="mt-3 border-t border-gray-200 dark:border-gray-700 pt-3" data-aos="fade-up">
+                    <div className="mb-4">
+                      <div className="flex">
+                        <input
+                          type="text"
+                          placeholder="Add a comment..."
+                          value={commentInputs[post._id] || ''}
+                          onChange={(e) => setCommentInputs(prev => ({ ...prev, [post._id]: e.target.value }))}
+                          className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-l-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-orange"
+                        />
+                        <button
+                          onClick={() => handleComment(post._id)}
+                          className="px-4 py-2 bg-brand-gradient text-white rounded-r-md hover:bg-brand-gradient-hover transition-colors"
                         >
-                          Retry
+                          Post
                         </button>
                       </div>
-                    ) : hasComments(post._id) ? (
-                      postComments[post._id].map((comment) => (
-                        <div key={comment._id} className="flex items-start mb-3">
-                          <div className="flex items-center mb-2">
-                            <div className="h-8 w-8 rounded-full overflow-hidden mr-2">
-                              <Link href={`/profile/${comment.user.username}`}>
+                      {commentErrors[post._id] && (
+                        <div className="mt-2 text-sm text-red-500">{commentErrors[post._id]}</div>
+                      )}
+                    </div>
+                    
+                    {loadingComments[post._id] ? (
+                      <div className="flex justify-center py-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-brand-red"></div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {hasComments(post._id) ? (
+                          postComments[post._id].map((comment, commentIndex) => (
+                            <div 
+                              key={comment._id} 
+                              className="flex items-start"
+                              data-aos="fade-up"
+                              data-aos-delay={commentIndex * 50}
+                            >
+                              <div className="w-8 h-8 rounded-full overflow-hidden mr-2">
                                 <OptimizedImage
-                                  src={comment.user.profilePic || `https://ui-avatars.com/api/?name=${comment.user.username}&background=random`}
+                                  src={comment.user.profilePic || `/default-avatar.png`}
                                   alt={comment.user.username}
                                   width={32}
                                   height={32}
-                                  className="h-full w-full object-cover"
+                                  className="w-full h-full object-cover"
                                 />
-                              </Link>
-                            </div>
-                            <div className="flex flex-col">
-                              <div className="font-medium text-sm">
-                                <Link 
-                                  href={`/profile/${comment.user.username}`}
-                                  className="hover:text-blue-500 transition-colors"
-                                >
-                                  {comment.user.username}
-                                </Link>
                               </div>
-                              <div className="text-gray-500 dark:text-gray-400 text-xs">
-                                {formatDate(comment.createdAt)}
+                              <div className="flex-1">
+                                <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-3">
+                                  <Link href={`/profile/${comment.user.username}`} className="font-medium mr-2 text-brand-orange hover:text-brand-red">
+                                    {comment.user.username}
+                                  </Link>
+                                  <span>{comment.text}</span>
+                                </div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                  {formatDate(comment.createdAt)}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          <p className="text-sm mt-1">{comment.text}</p>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center text-gray-500 dark:text-gray-400 text-sm py-2">
-                        No comments yet. Be the first to comment!
+                          ))
+                        ) : (
+                          <div className="text-center text-gray-500 py-4">No comments yet</div>
+                        )}
                       </div>
                     )}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           ))}
         </div>

@@ -209,7 +209,7 @@ export default function EditProfileModal({ profile, isOpen, onClose, onUpdate })
             <button 
               type="button" 
               onClick={triggerFileInput}
-              className="text-blue-500 text-sm font-medium"
+              className="text-brand-orange hover:text-brand-red text-sm font-medium"
             >
               Change Profile Photo
             </button>
@@ -222,7 +222,7 @@ export default function EditProfileModal({ profile, isOpen, onClose, onUpdate })
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-orange"
               placeholder="Your full name"
             />
           </div>
@@ -233,7 +233,7 @@ export default function EditProfileModal({ profile, isOpen, onClose, onUpdate })
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 resize-none"
+              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-brand-orange"
               placeholder="Write something about yourself..."
               rows={4}
             />
@@ -251,7 +251,7 @@ export default function EditProfileModal({ profile, isOpen, onClose, onUpdate })
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
+              className="px-4 py-2 bg-brand-gradient text-white rounded-md hover:bg-brand-gradient-hover disabled:opacity-50"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Saving..." : "Save Changes"}

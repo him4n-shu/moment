@@ -193,7 +193,7 @@ export default function UserProfile() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-red"></div>
       </div>
     );
   }
@@ -247,7 +247,7 @@ export default function UserProfile() {
                   className={`px-4 py-1 rounded-md font-medium flex items-center gap-2
                     ${isFollowing 
                       ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600' 
-                      : 'bg-blue-500 text-white hover:bg-blue-600'
+                      : 'bg-brand-gradient text-white hover:bg-brand-gradient-hover'
                     } transition-all duration-200`}
                 >
                   {isFollowing ? (

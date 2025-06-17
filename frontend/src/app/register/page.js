@@ -2,10 +2,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiEye, FiEyeOff, FiUser, FiMail, FiLock, FiArrowRight, FiCheck } from 'react-icons/fi';
+import { FcGoogle } from 'react-icons/fc';
 import { getApiUrl } from '@/utils/api';
-import OptimizedImage from '../components/OptimizedImage';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 
 export default function Register() {
   const router = useRouter();
@@ -26,6 +27,15 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1); // 1: Initial form, 2: OTP verification
   const [userId, setUserId] = useState(null);
+  const [focused, setFocused] = useState({
+    username: false,
+    firstName: false,
+    lastName: false,
+    email: false,
+    password: false,
+    confirmPassword: false,
+    otp: false
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,6 +43,14 @@ export default function Register() {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleFocus = (field) => {
+    setFocused({ ...focused, [field]: true });
+  };
+
+  const handleBlur = (field) => {
+    setFocused({ ...focused, [field]: false });
   };
 
   const validateForm = () => {
@@ -177,261 +195,356 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
-      <div className="max-w-md w-full mx-auto mb-8 text-center">
-        <div className="flex justify-center mb-2">
-          <OptimizedImage
-            src="/logo.png"
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 relative">
+      {/* Background SVG */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <Image
+          src="/backgrounds/auth-background.svg"
+          alt="Background"
+          fill
+          className="object-cover opacity-50"
+          priority
+        />
+      </div>
+      
+      <motion.div 
+        className="max-w-md w-full mx-auto mb-8 text-center z-10"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <motion.div 
+          className="flex justify-center mb-2"
+          initial={{ scale: 0.8 }}
+          animate={{ scale: 1 }}
+          transition={{ 
+            type: "spring", 
+            stiffness: 260, 
+            damping: 20,
+            delay: 0.2 
+          }}
+        >
+          <Image
+            src="/logos/animated-logo.svg"
             alt="Moment Logo"
             width={120}
             height={120}
             className="w-24 h-24"
           />
-        </div>
-        <h1 className="text-3xl font-bold" style={{ color: 'var(--primary)' }}>Moment</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">Share your moments with the world</p>
-      </div>
+        </motion.div>
+        <motion.div 
+          className="flex justify-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
+          <Image 
+            src="/logos/text-logo.svg"
+            alt="Moment"
+            width={150}
+            height={40}
+            className="h-10 w-auto"
+          />
+        </motion.div>
+        <motion.p 
+          className="text-gray-600 dark:text-gray-400 mt-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+        >
+          Share your moments with the world
+        </motion.p>
+      </motion.div>
       
-      <div className="max-w-md w-full bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md transition-colors duration-300 card">
-        <h2 className="text-2xl font-bold text-center mb-6">
-          {step === 1 ? 'Create your account' : 'Verify your email'}
-        </h2>
-        
-        {step === 1 && (
-          <p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-6">
-            Already have an account? <Link href="/login" className="text-blue-500 hover:text-blue-600">Sign in</Link>
-          </p>
-        )}
-        
-        {step === 2 && (
-          <p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-6">
-            Enter the OTP sent to your email
-          </p>
-        )}
+      <motion.div 
+        className="max-w-md w-full mx-auto rounded-2xl shadow-xl transition-colors duration-300 z-10 overflow-hidden"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+      >
+        <div className="bg-gradient-to-r from-[#FF6B6B] via-[#FF8E53] to-[#FFD166] p-6 text-white">
+          <motion.h2 
+            className="text-2xl font-bold text-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+          >
+            {step === 1 ? 'Create your account' : 'Verify your email'}
+          </motion.h2>
+          <motion.p
+            className="text-center text-blue-100 mt-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            {step === 1 ? 'Join our community today' : 'Enter the verification code sent to your email'}
+          </motion.p>
+        </div>
 
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md p-4 mb-6">
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-          </div>
-        )}
-
-        {step === 1 && (
-          <div>
-            <button
-              onClick={handleGoogleSignup}
-              className="w-full py-2 px-4 rounded-md transition-colors duration-300 flex items-center justify-center mb-4"
-              style={{ 
-                backgroundColor: 'white', 
-                color: '#333',
-                borderColor: '#ddd',
-                borderWidth: '1px',
-                borderStyle: 'solid'
-              }}
+        <div className="bg-white dark:bg-gray-800 p-8">
+          {step === 1 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.7 }}
             >
-              <Image 
-                src="/icons/google-icon.svg" 
-                alt="Google" 
-                width={18} 
-                height={18} 
-                className="mr-2" 
-              />
-              Sign up with Google
-            </button>
-            
-            <div className="my-4 flex items-center">
-              <div className="flex-grow border-t border-gray-300 dark:border-gray-700"></div>
-              <span className="mx-4 text-sm text-gray-500 dark:text-gray-400">OR</span>
-              <div className="flex-grow border-t border-gray-300 dark:border-gray-700"></div>
-            </div>
-          </div>
-        )}
+              <motion.button
+                onClick={handleGoogleSignup}
+                className="w-full py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-center bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-2 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 mb-6"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <FcGoogle className="text-xl mr-2" />
+                <span>Sign up with Google</span>
+              </motion.button>
+              
+              <div className="flex items-center my-6">
+                <div className="flex-grow h-px bg-gray-300 dark:bg-gray-600"></div>
+                <span className="mx-4 text-sm text-gray-500 dark:text-gray-400 font-medium">OR</span>
+                <div className="flex-grow h-px bg-gray-300 dark:bg-gray-600"></div>
+              </div>
+            </motion.div>
+          )}
 
-        <form className="space-y-4" onSubmit={step === 1 ? handleInitialSubmit : handleOTPSubmit}>
-          {step === 1 ? (
-            <>
-              <div className="space-y-4">
-                <div>
-                  <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Username*
-                  </label>
-                  <input
-                    id="username"
-                    name="username"
-                    type="text"
-                    required
-                    value={formData.username}
-                    onChange={handleChange}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    First Name*
-                  </label>
-                  <input
-                    id="firstName"
-                    name="firstName"
-                    type="text"
-                    required
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="middleName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Middle Name
-                  </label>
-                  <input
-                    id="middleName"
-                    name="middleName"
-                    type="text"
-                    value={formData.middleName}
-                    onChange={handleChange}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Last Name*
-                  </label>
-                  <input
-                    id="lastName"
-                    name="lastName"
-                    type="text"
-                    required
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Email*
-                  </label>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Password*
-                  </label>
-                  <div className="mt-1 relative">
+          <motion.form 
+            className="space-y-5" 
+            onSubmit={step === 1 ? handleInitialSubmit : handleOTPSubmit}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.8 }}
+          >
+            {step === 1 ? (
+              <>
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.9 }}
+                  className="relative"
+                >
+                  <div className={`flex items-center border-2 rounded-lg px-3 py-2 ${focused.username ? 'border-[#FF8E53] dark:border-[#FF8E53]' : 'border-gray-300 dark:border-gray-600'} transition-colors duration-200`}>
+                    <FiUser className={`mr-2 ${focused.username ? 'text-[#FF8E53] dark:text-[#FF8E53]' : 'text-gray-500 dark:text-gray-400'} transition-colors duration-200`} />
                     <input
-                      id="password"
+                      name="username"
+                      type="text"
+                      placeholder="Username"
+                      value={formData.username}
+                      onChange={handleChange}
+                      onFocus={() => handleFocus('username')}
+                      onBlur={() => handleBlur('username')}
+                      className="w-full bg-transparent focus:outline-none text-gray-800 dark:text-white"
+                    />
+                  </div>
+                </motion.div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.5, delay: 1.0 }}
+                    className="relative"
+                  >
+                    <div className={`flex items-center border-2 rounded-lg px-3 py-2 ${focused.firstName ? 'border-[#FF8E53] dark:border-[#FF8E53]' : 'border-gray-300 dark:border-gray-600'} transition-colors duration-200`}>
+                      <input
+                        name="firstName"
+                        type="text"
+                        placeholder="First name"
+                        value={formData.firstName}
+                        onChange={handleChange}
+                        onFocus={() => handleFocus('firstName')}
+                        onBlur={() => handleBlur('firstName')}
+                        className="w-full bg-transparent focus:outline-none text-gray-800 dark:text-white"
+                      />
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.5, delay: 1.1 }}
+                    className="relative"
+                  >
+                    <div className={`flex items-center border-2 rounded-lg px-3 py-2 ${focused.lastName ? 'border-[#FF8E53] dark:border-[#FF8E53]' : 'border-gray-300 dark:border-gray-600'} transition-colors duration-200`}>
+                      <input
+                        name="lastName"
+                        type="text"
+                        placeholder="Last name"
+                        value={formData.lastName}
+                        onChange={handleChange}
+                        onFocus={() => handleFocus('lastName')}
+                        onBlur={() => handleBlur('lastName')}
+                        className="w-full bg-transparent focus:outline-none text-gray-800 dark:text-white"
+                      />
+                    </div>
+                  </motion.div>
+                </div>
+
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 1.2 }}
+                  className="relative"
+                >
+                  <div className={`flex items-center border-2 rounded-lg px-3 py-2 ${focused.email ? 'border-[#FF8E53] dark:border-[#FF8E53]' : 'border-gray-300 dark:border-gray-600'} transition-colors duration-200`}>
+                    <FiMail className={`mr-2 ${focused.email ? 'text-[#FF8E53] dark:text-[#FF8E53]' : 'text-gray-500 dark:text-gray-400'} transition-colors duration-200`} />
+                    <input
+                      name="email"
+                      type="email"
+                      placeholder="Email address"
+                      value={formData.email}
+                      onChange={handleChange}
+                      onFocus={() => handleFocus('email')}
+                      onBlur={() => handleBlur('email')}
+                      className="w-full bg-transparent focus:outline-none text-gray-800 dark:text-white"
+                    />
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 1.3 }}
+                  className="relative"
+                >
+                  <div className={`flex items-center border-2 rounded-lg px-3 py-2 ${focused.password ? 'border-[#FF8E53] dark:border-[#FF8E53]' : 'border-gray-300 dark:border-gray-600'} transition-colors duration-200`}>
+                    <FiLock className={`mr-2 ${focused.password ? 'text-[#FF8E53] dark:text-[#FF8E53]' : 'text-gray-500 dark:text-gray-400'} transition-colors duration-200`} />
+                    <input
                       name="password"
                       type={showPassword ? "text" : "password"}
-                      required
+                      placeholder="Create password"
                       value={formData.password}
                       onChange={handleChange}
-                      className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:text-white"
+                      onFocus={() => handleFocus('password')}
+                      onBlur={() => handleBlur('password')}
+                      className="w-full bg-transparent focus:outline-none text-gray-800 dark:text-white"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                     >
-                      {showPassword ? (
-                        <FiEyeOff className="h-5 w-5 text-gray-400" />
-                      ) : (
-                        <FiEye className="h-5 w-5 text-gray-400" />
-                      )}
+                      {showPassword ? <FiEyeOff /> : <FiEye />}
                     </button>
                   </div>
-                </div>
+                </motion.div>
 
-                <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Confirm Password*
-                  </label>
-                  <div className="mt-1 relative">
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 1.4 }}
+                  className="relative"
+                >
+                  <div className={`flex items-center border-2 rounded-lg px-3 py-2 ${focused.confirmPassword ? 'border-[#FF8E53] dark:border-[#FF8E53]' : 'border-gray-300 dark:border-gray-600'} transition-colors duration-200`}>
+                    <FiLock className={`mr-2 ${focused.confirmPassword ? 'text-[#FF8E53] dark:text-[#FF8E53]' : 'text-gray-500 dark:text-gray-400'} transition-colors duration-200`} />
                     <input
-                      id="confirmPassword"
                       name="confirmPassword"
                       type={showConfirmPassword ? "text" : "password"}
-                      required
+                      placeholder="Confirm password"
                       value={formData.confirmPassword}
                       onChange={handleChange}
-                      className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:text-white"
+                      onFocus={() => handleFocus('confirmPassword')}
+                      onBlur={() => handleBlur('confirmPassword')}
+                      className="w-full bg-transparent focus:outline-none text-gray-800 dark:text-white"
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                     >
-                      {showConfirmPassword ? (
-                        <FiEyeOff className="h-5 w-5 text-gray-400" />
-                      ) : (
-                        <FiEye className="h-5 w-5 text-gray-400" />
-                      )}
+                      {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
                     </button>
                   </div>
+                </motion.div>
+              </>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.9 }}
+                className="relative"
+              >
+                <div className={`flex items-center border-2 rounded-lg px-3 py-2 ${focused.otp ? 'border-[#FF8E53] dark:border-[#FF8E53]' : 'border-gray-300 dark:border-gray-600'} transition-colors duration-200`}>
+                  <FiCheck className={`mr-2 ${focused.otp ? 'text-[#FF8E53] dark:text-[#FF8E53]' : 'text-gray-500 dark:text-gray-400'} transition-colors duration-200`} />
+                  <input
+                    name="otp"
+                    type="text"
+                    placeholder="Enter verification code"
+                    value={formData.otp}
+                    onChange={handleChange}
+                    onFocus={() => handleFocus('otp')}
+                    onBlur={() => handleBlur('otp')}
+                    className="w-full bg-transparent focus:outline-none text-gray-800 dark:text-white"
+                  />
                 </div>
-              </div>
+              </motion.div>
+            )}
 
-              <div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Creating account...' : 'Create account'}
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="otp" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Enter OTP
-                </label>
-                <input
-                  id="otp"
-                  name="otp"
-                  type="text"
-                  required
-                  maxLength="6"
-                  value={formData.otp}
-                  onChange={handleChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:text-white text-center tracking-widest"
-                  style={{ letterSpacing: '0.5em' }}
-                />
-              </div>
+            {error && (
+              <motion.div 
+                className="p-3 rounded-lg bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                {error}
+              </motion.div>
+            )}
 
-              <div className="flex flex-col space-y-3">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Verifying...' : 'Verify OTP'}
-                </button>
-
+            <motion.button
+              type="submit"
+              className="w-full py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-center bg-gradient-to-r from-[#FF6B6B] via-[#FF8E53] to-[#FFD166] text-white font-medium hover:shadow-lg hover:from-[#FF5B5B] hover:via-[#FF7E43] hover:to-[#FFC156] group"
+              disabled={loading}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 1.5 }}
+            >
+              <span>{loading ? 'Processing...' : (step === 1 ? 'Create Account' : 'Verify Email')}</span>
+              <FiArrowRight className="ml-2 transform group-hover:translate-x-1 transition-transform duration-200" />
+            </motion.button>
+            
+            {step === 2 && (
+              <motion.div 
+                className="mt-4 text-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3, delay: 1 }}
+              >
                 <button
                   type="button"
                   onClick={handleResendOTP}
+                  className="text-[#FF6B6B] hover:text-[#FF8E53] dark:text-[#FF8E53] dark:hover:text-[#FFD166] text-sm"
                   disabled={loading}
-                  className="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
                 >
-                  Didn&apos;t receive the code? Resend OTP
+                  Didn't receive the code? Resend OTP
                 </button>
-              </div>
-            </div>
-          )}
-        </form>
-      </div>
+              </motion.div>
+            )}
+          </motion.form>
+          
+          <motion.div 
+            className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 1.6 }}
+          >
+            {step === 1 ? (
+              <>
+                Already have an account?{" "}
+                <Link href="/login" className="text-[#FF6B6B] hover:text-[#FF8E53] dark:text-[#FF8E53] dark:hover:text-[#FFD166] font-medium">
+                  Sign in
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/login" className="text-[#FF6B6B] hover:text-[#FF8E53] dark:text-[#FF8E53] dark:hover:text-[#FFD166] font-medium">
+                  Back to login
+                </Link>
+              </>
+            )}
+          </motion.div>
+        </div>
+      </motion.div>
     </div>
   );
 } 

@@ -32,7 +32,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Initialize Socket.IO with extended configuration
+// Initialize Socket.IO with improved configuration
 const io = new Server(httpServer, {
   cors: {
     origin: process.env.NODE_ENV === 'production'
@@ -44,18 +44,19 @@ const io = new Server(httpServer, {
   },
   pingTimeout: 60000,
   pingInterval: 25000,
-  transports: ['polling', 'websocket'], 
+  transports: ['websocket', 'polling'], // Prefer websocket first for better performance
+  connectTimeout: 45000,
   allowEIO3: true,
   maxHttpBufferSize: 1e8, 
   path: '/socket.io/',
   cookie: {
     name: 'io',
     httpOnly: true,
-    sameSite: 'strict'
+    sameSite: 'lax' // Changed from 'strict' for better cross-domain support
   }
 });
 
-// Store connected users
+// Store connected users with timestamp for monitoring
 const connectedUsers = new Map();
 
 // Socket.IO middleware
@@ -66,21 +67,64 @@ io.engine.on("connection_error", (err) => {
   console.error('Socket.IO connection error:', err);
 });
 
+// Monitor socket connections
+setInterval(() => {
+  const activeConnections = io.engine.clientsCount;
+  console.log(`Active socket connections: ${activeConnections}`);
+  
+  // Check for stale connections
+  const now = Date.now();
+  connectedUsers.forEach((data, userId) => {
+    const timeSinceLastActivity = now - data.lastActivity;
+    if (timeSinceLastActivity > 3600000) { // 1 hour
+      console.log(`Potential stale connection for user ${data.username}, inactive for ${timeSinceLastActivity/1000}s`);
+    }
+  });
+}, 300000); // Every 5 minutes
+
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.user.username);
 
-  // Store user's socket connection
-  connectedUsers.set(socket.user._id.toString(), socket.id);
+  // Store user's socket connection with timestamp
+  connectedUsers.set(socket.user._id.toString(), {
+    socketId: socket.id,
+    username: socket.user.username,
+    connectedAt: Date.now(),
+    lastActivity: Date.now()
+  });
+
+  // Update last activity on any event
+  socket.onAny(() => {
+    if (connectedUsers.has(socket.user._id.toString())) {
+      const userData = connectedUsers.get(socket.user._id.toString());
+      userData.lastActivity = Date.now();
+      connectedUsers.set(socket.user._id.toString(), userData);
+    }
+  });
 
   // Handle connection errors
   socket.on('error', (error) => {
     console.error('Socket error for user', socket.user.username, ':', error);
   });
 
+  // Handle ping from client
+  socket.on('client_ping', () => {
+    socket.emit('server_pong', { timestamp: Date.now() });
+  });
+
   // Handle disconnection
   socket.on('disconnect', (reason) => {
-    connectedUsers.delete(socket.user._id.toString());
     console.log('User disconnected:', socket.user.username, 'Reason:', reason);
+    
+    // Keep the record for a short time in case they reconnect
+    setTimeout(() => {
+      // Only remove if this specific socket ID is still the one in the map
+      const userData = connectedUsers.get(socket.user._id.toString());
+      if (userData && userData.socketId === socket.id) {
+        connectedUsers.delete(socket.user._id.toString());
+        console.log('User connection record removed:', socket.user.username);
+      }
+    }, 10000); // Wait 10 seconds before removing
   });
 });
 
@@ -107,13 +151,32 @@ app.use((req, res, next) => {
 });
 
 // Add health check endpoint for monitoring
-app.get('/', (req, res) => {
+app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'success',
     message: 'Moment API is running',
     version: '1.0.0',
     environment: process.env.NODE_ENV,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    connections: io.engine.clientsCount
+  });
+});
+
+// Root endpoint for basic health check
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: 'Moment API is running',
+    version: '1.0.0'
+  });
+});
+
+// Root endpoint for basic health check
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: 'Moment API is running',
+    version: '1.0.0'
   });
 });
 
