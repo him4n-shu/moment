@@ -147,7 +147,7 @@ function LayoutWithSocket({ children, isAuthPage }) {
         <MobileNavbar user={user} toggleMenu={toggleMobileMenu} isOpen={mobileMenuOpen} />
       </div>
       
-      <div className="flex-1 md:ml-16 min-h-screen transition-colors duration-300 mt-14 md:mt-0 bg-white dark:bg-gray-900" style={{ backgroundColor: 'var(--background)' }}>
+      <div className="flex-1 md:ml-16 min-h-screen transition-colors duration-300 mt-14 md:mt-0 bg-white" style={{ backgroundColor: '#ffffff' }}>
         {/* Desktop Navbar */}
         <div className="hidden md:block sticky-element top-0 z-10">
           <Navbar />

@@ -336,12 +336,12 @@ export default function Feed() {
   }
 
   return (
-    <div className="w-full mx-0 py-4 px-0 bg-white dark:bg-gray-900">
+    <div className="w-full mx-0 py-4 px-0 bg-white">
       <div className="flex justify-between items-center mb-4 px-4">
         <h1 className="text-2xl font-bold text-brand-red" data-aos="fade-right">Explore Latest Posts</h1>
         <button 
           onClick={handleManualRefresh} 
-          className="flex items-center text-sm text-gray-600 hover:text-brand-orange dark:text-gray-400 dark:hover:text-brand-yellow"
+          className="flex items-center text-sm text-gray-600 hover:text-brand-orange"
           disabled={refreshing}
           data-aos="fade-left"
         >
@@ -355,8 +355,8 @@ export default function Feed() {
       </div>
       
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 p-4 rounded-md mb-4 mx-4" data-aos="fade-in">
-          <p className="text-red-600 dark:text-red-400">{error}</p>
+        <div className="bg-red-50 border border-red-200 p-4 rounded-md mb-4 mx-4" data-aos="fade-in">
+          <p className="text-red-600">{error}</p>
         </div>
       )}
       
@@ -365,9 +365,9 @@ export default function Feed() {
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-red"></div>
         </div>
       ) : posts.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-md mx-4" data-aos="fade-up">
+        <div className="text-center py-12 bg-white rounded-lg shadow-md mx-4" data-aos="fade-up">
           <h2 className="text-xl font-semibold mb-2">No posts yet</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
+          <p className="text-gray-600 mb-4">
             Your feed is empty. Follow some users to see their posts here.
           </p>
           <Link 
@@ -382,7 +382,7 @@ export default function Feed() {
           {posts.map((post, index) => (
             <div 
               key={post._id} 
-              className="bg-white dark:bg-gray-800 rounded-none shadow-sm border-t border-b border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300 w-full"
+              className="bg-white rounded-none shadow-sm border-t border-b border-gray-200 overflow-hidden transition-all duration-300 w-full"
               data-aos="fade-up"
               data-aos-delay={index * 100}
               data-aos-anchor-placement="top-bottom"
@@ -401,17 +401,17 @@ export default function Feed() {
                     </div>
                     <div>
                       <div className="font-medium text-sm sm:text-base">{post.user.username}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                      <div className="text-xs text-gray-500">
                         {formatDate(post.createdAt)}
                       </div>
                     </div>
                   </Link>
-                  <button className="ml-auto text-gray-500 hover:text-brand-orange dark:text-gray-400 dark:hover:text-brand-yellow">
+                  <button className="ml-auto text-gray-500 hover:text-brand-orange">
                     <FiMoreHorizontal />
                   </button>
                 </div>
                 
-                <p className="mb-3 text-sm">{post.caption}</p>
+                <p className="mb-3 text-sm text-gray-800">{post.caption}</p>
                 
                 {(post.imageUrl || post.imageData || post.image) && (
                   <div className="mb-4 -mx-3 p-0" data-aos="zoom-in" data-aos-delay={(index * 100) + 100}>
@@ -456,7 +456,7 @@ export default function Feed() {
                 )}
                 
                 {activeCommentPostId === post._id && (
-                  <div className="mt-3 border-t border-gray-200 dark:border-gray-700 pt-3" data-aos="fade-up">
+                  <div className="mt-3 border-t border-gray-200 pt-3" data-aos="fade-up">
                     <div className="mb-4">
                       <div className="flex">
                         <input
@@ -464,7 +464,7 @@ export default function Feed() {
                           placeholder="Add a comment..."
                           value={commentInputs[post._id] || ''}
                           onChange={(e) => setCommentInputs(prev => ({ ...prev, [post._id]: e.target.value }))}
-                          className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-l-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-orange"
+                          className="flex-1 p-2 border border-gray-300 rounded-l-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-orange"
                         />
                         <button
                           onClick={() => handleComment(post._id)}
@@ -502,13 +502,13 @@ export default function Feed() {
                                 />
                               </div>
                               <div className="flex-1">
-                                <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-3">
+                                <div className="bg-gray-100 rounded-lg p-3">
                                   <Link href={`/profile/${comment.user.username}`} className="font-medium mr-2 text-brand-orange hover:text-brand-red">
                                     {comment.user.username}
                                   </Link>
                                   <span>{comment.text}</span>
                                 </div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                <div className="text-xs text-gray-500 mt-1">
                                   {formatDate(comment.createdAt)}
                                 </div>
                               </div>
