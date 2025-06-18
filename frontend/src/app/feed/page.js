@@ -21,37 +21,45 @@ export default function Feed() {
 
   // Fetch the feed on component mount and every 30 seconds
   useEffect(() => {
-    fetchFeed();
-    
-    // Auto-refresh the feed every 30 seconds
-    const interval = setInterval(() => {
-      fetchFeed(false); 
-    }, 30000);
-    
-    return () => clearInterval(interval);
+    try {
+      fetchFeed();
+      
+      // Auto-refresh the feed every 30 seconds
+      const interval = setInterval(() => {
+        fetchFeed(false); 
+      }, 30000);
+      
+      return () => clearInterval(interval);
+    } catch (err) {
+      console.error("Error in feed useEffect:", err);
+      setError(`Error initializing feed: ${err.message}`);
+      setLoading(false);
+    }
   }, []);
 
   const fetchFeed = async (showLoading = true) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setError("You must be logged in to view the feed");
-      setLoading(false);
-      return;
-    }
-
-    if (showLoading) {
-      setRefreshing(true);
-    }
-
     try {
-      const response = await fetch(getApiUrl("api/posts/feed"), {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("You must be logged in to view the feed");
+        setLoading(false);
+        return;
+      }
+
+      if (showLoading) {
+        setRefreshing(true);
+      }
+
+      const apiUrl = getApiUrl("api/posts/feed");
+      
+      const response = await fetch(apiUrl, {
         headers: { 
           Authorization: `Bearer ${token}` 
         }
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch feed");
+        throw new Error(`Failed to fetch feed: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -82,7 +90,7 @@ export default function Feed() {
     } catch (error) {
       console.error("Error fetching feed:", error);
       if (showLoading) {
-        setError("Failed to load feed. Please try again later.");
+        setError(`Failed to load feed: ${error.message}`);
       }
     } finally {
       setLoading(false);
@@ -312,24 +320,20 @@ export default function Feed() {
     return postComments[postId] && postComments[postId].length > 0;
   };
 
-  if (loading) {
+  if (!localStorage.getItem("token")) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-red"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="max-w-3xl mx-auto pt-8 px-4">
-        <div className="bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-200 p-4 rounded-lg">
-          <p>{error}</p>
-          {!localStorage.getItem("token") && (
-            <Link href="/login" className="mt-2 inline-block text-brand-orange hover:text-brand-red hover:underline">
-              Login to view the feed
-            </Link>
-          )}
+      <div className="w-full mx-0 py-4 px-4 bg-white">
+        <div className="text-center py-12 bg-white rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold mb-2">Please Log In</h2>
+          <p className="text-gray-600 mb-4">
+            You need to be logged in to view the feed.
+          </p>
+          <Link 
+            href="/login" 
+            className="inline-block px-4 py-2 bg-brand-gradient text-white rounded-md hover:bg-brand-gradient-hover transition-colors"
+          >
+            Login to view the feed
+          </Link>
         </div>
       </div>
     );
@@ -338,34 +342,40 @@ export default function Feed() {
   return (
     <div className="w-full mx-0 py-4 px-0 bg-white">
       <div className="flex justify-between items-center mb-4 px-4">
-        <h1 className="text-2xl font-bold text-brand-red" data-aos="fade-right">Explore Latest Posts</h1>
+        <h1 className="text-2xl font-bold text-brand-red">Explore Latest Posts</h1>
         <button 
           onClick={handleManualRefresh} 
           className="flex items-center text-sm text-gray-600 hover:text-brand-orange"
           disabled={refreshing}
-          data-aos="fade-left"
         >
           <FiRefreshCw className={`mr-1 ${refreshing ? 'animate-spin' : ''}`} />
           {refreshing ? 'Refreshing...' : 'Refresh'}
         </button>
       </div>
       
-      <div className="text-sm text-gray-500 mb-4 px-4" data-aos="fade-up">
+      <div className="text-sm text-gray-500 mb-4 px-4">
         Last updated: {formatLastRefresh()}
       </div>
       
       {error && (
-        <div className="bg-red-50 border border-red-200 p-4 rounded-md mb-4 mx-4" data-aos="fade-in">
+        <div className="bg-red-50 border border-red-200 p-4 rounded-md mb-4 mx-4">
           <p className="text-red-600">{error}</p>
+          <button 
+            onClick={handleManualRefresh}
+            className="mt-2 text-sm text-brand-red hover:text-brand-orange"
+          >
+            Try Again
+          </button>
         </div>
       )}
       
       {loading ? (
-        <div className="flex justify-center items-center py-12" data-aos="fade-in">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-red"></div>
+        <div className="flex flex-col justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-red mb-4"></div>
+          <p className="text-gray-600">Loading your feed...</p>
         </div>
-      ) : posts.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg shadow-md mx-4" data-aos="fade-up">
+      ) : posts.length === 0 && !error ? (
+        <div className="text-center py-12 bg-white rounded-lg shadow-md mx-4">
           <h2 className="text-xl font-semibold mb-2">No posts yet</h2>
           <p className="text-gray-600 mb-4">
             Your feed is empty. Follow some users to see their posts here.
@@ -378,20 +388,17 @@ export default function Feed() {
           </Link>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2 max-w-2xl mx-auto">
           {posts.map((post, index) => (
             <div 
               key={post._id} 
               className="bg-white rounded-none shadow-sm border-t border-b border-gray-200 overflow-hidden transition-all duration-300 w-full"
-              data-aos="fade-up"
-              data-aos-delay={index * 100}
-              data-aos-anchor-placement="top-bottom"
             >
               <div className="p-3">
                 <div className="flex items-center mb-2">
                   <Link href={`/profile/${post.user.username}`} className="flex items-center">
                     <div className="w-8 h-8 rounded-full overflow-hidden mr-2">
-                      <OptimizedImage
+                      <img
                         src={post.user.profilePic || `/default-avatar.png`}
                         alt={post.user.username}
                         width={32}
@@ -414,13 +421,15 @@ export default function Feed() {
                 <p className="mb-3 text-sm text-gray-800">{post.caption}</p>
                 
                 {(post.imageUrl || post.imageData || post.image) && (
-                  <div className="mb-4 -mx-3 p-0" data-aos="zoom-in" data-aos-delay={(index * 100) + 100}>
-                    <OptimizedImage
+                  <div className="mb-4 -mx-3 sm:mx-0 p-0 flex justify-center">
+                    <img
                       src={post.imageData || post.imageUrl || post.image}
                       alt={`${post.user.username}'s post`}
-                      width={400}
-                      height={400}
-                      className="w-full"
+                      className="feed-image"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/default-avatar.png';
+                      }}
                     />
                   </div>
                 )}
@@ -493,7 +502,7 @@ export default function Feed() {
                               data-aos-delay={commentIndex * 50}
                             >
                               <div className="w-8 h-8 rounded-full overflow-hidden mr-2">
-                                <OptimizedImage
+                                <img
                                   src={comment.user.profilePic || `/default-avatar.png`}
                                   alt={comment.user.username}
                                   width={32}

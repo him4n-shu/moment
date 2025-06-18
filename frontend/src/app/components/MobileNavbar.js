@@ -143,7 +143,7 @@ export default function MobileNavbar({ user, toggleMenu, isOpen }) {
   return (
     <>
       {/* Top Navigation Bar */}
-      <nav className="fixed top-0 left-0 right-0 z-10 shadow-md bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 transition-colors duration-300">
+      <nav className="fixed top-0 left-0 right-0 z-10 shadow-md bg-white border-b border-gray-200 transition-colors duration-300">
         <div className="flex justify-between items-center px-3 py-3">
           <Link href="/" className="flex-shrink-0 flex items-center">
             <Image 
@@ -168,13 +168,13 @@ export default function MobileNavbar({ user, toggleMenu, isOpen }) {
               <>
                 <button 
                   onClick={() => setShowSearchModal(true)}
-                  className="p-2 text-gray-600 dark:text-gray-300 hover:text-brand-red touch-target"
+                  className="p-2 text-gray-600 hover:text-brand-red touch-target"
                   aria-label="Search"
                 >
                   <FiSearch className="h-5 w-5" />
                 </button>
                 <Link href="/notifications" className="relative p-2 touch-target">
-                  <FiBell className="h-5 w-5 text-gray-600 dark:text-gray-300 hover:text-brand-red" />
+                  <FiBell className="h-5 w-5 text-gray-600 hover:text-brand-red" />
                   {notificationCount > 0 && (
                     <span className="absolute top-0 right-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-brand-gradient rounded-full">
                       {notificationCount > 9 ? '9+' : notificationCount}
@@ -185,7 +185,7 @@ export default function MobileNavbar({ user, toggleMenu, isOpen }) {
             )}
             <button 
               onClick={toggleMenu} 
-              className="p-2 text-gray-900 dark:text-white rounded-full hover:bg-gray-100 hover:text-brand-red touch-target"
+              className="p-2 text-gray-900 rounded-full hover:bg-gray-100 hover:text-brand-red touch-target"
               aria-label={isOpen ? "Close menu" : "Open menu"}
             >
               {isOpen ? <FiX size={24} /> : <FiMenu size={24} />}
@@ -197,12 +197,12 @@ export default function MobileNavbar({ user, toggleMenu, isOpen }) {
       {/* Search Modal */}
       {showSearchModal && (
         <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-start justify-center pt-16">
-          <div ref={searchModalRef} className="bg-white dark:bg-gray-800 w-full max-w-md mx-4 rounded-lg shadow-lg p-4">
+          <div ref={searchModalRef} className="bg-white w-full max-w-md mx-4 rounded-lg shadow-lg p-4">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Search</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Search</h3>
               <button 
                 onClick={() => setShowSearchModal(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="text-gray-500 hover:text-gray-700"
               >
                 <FiX size={20} />
               </button>
@@ -214,16 +214,16 @@ export default function MobileNavbar({ user, toggleMenu, isOpen }) {
 
       {/* Slide-in Menu */}
       <div 
-        className={`fixed inset-0 z-50 bg-white dark:bg-gray-900 transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`} 
+        className={`fixed inset-0 z-50 bg-white transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`} 
         style={{ top: '60px' }}
       >
         <div className="flex flex-col h-full p-4 overflow-y-auto pb-24">
           <div className="flex-1 space-y-4 touch-list">
             {user ? (
               <>
-                <div className="flex items-center space-x-3 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center space-x-3 mb-6 pb-6 border-b border-gray-200">
                   <div className="w-14 h-14 rounded-full overflow-hidden">
-                    <OptimizedImage
+                    <img
                       src={user.profilePic || `https://ui-avatars.com/api/?name=${user.username}&background=random`} 
                       alt={user.username} 
                       width={56}
@@ -232,8 +232,8 @@ export default function MobileNavbar({ user, toggleMenu, isOpen }) {
                     />
                   </div>
                   <div>
-                    <div className="font-medium text-lg text-gray-900 dark:text-white">{user.username}</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">View profile</div>
+                    <div className="font-medium text-lg text-gray-900">{user.username}</div>
+                    <div className="text-sm text-gray-500">View profile</div>
                   </div>
                 </div>
                 

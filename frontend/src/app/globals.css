@@ -153,17 +153,36 @@ body {
 img.landscape {
   width: 100%;
   height: auto;
+  max-height: 500px;
+  object-fit: contain;
 }
 
 img.portrait {
-  height: 100%;
+  height: auto;
   width: auto;
   max-height: 500px;
+  max-width: 100%;
+  object-fit: contain;
 }
 
 img.square {
-  max-width: 500px;
+  max-width: 100%;
   max-height: 500px;
+  object-fit: contain;
+}
+
+/* Standard feed image size */
+.feed-image {
+  max-height: 500px;
+  object-fit: contain;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .feed-image {
+    max-width: 600px;
+    margin: 0 auto;
+  }
 }
 
 /* Enhanced responsive adjustments for all screen sizes */
@@ -437,8 +456,8 @@ img.moderately-tall {
 @media (max-width: 640px) {
   .card {
     border-radius: 0;
-    margin-left: -1rem;
-    margin-right: -1rem;
+    margin-left: 0;
+    margin-right: 0;
     border-left: none;
     border-right: none;
   }
@@ -474,6 +493,7 @@ img.moderately-tall {
     padding-left: 0;
     padding-right: 0;
     max-width: 100%;
+    width: 100%;
   }
   
   /* Ensure images extend to edges */
@@ -483,5 +503,18 @@ img.moderately-tall {
     border-radius: 0;
     border-left: none;
     border-right: none;
+  }
+  
+  /* Ensure proper spacing for content */
+  body {
+    width: 100%;
+    overflow-x: hidden;
+  }
+  
+  /* Fix animation issues that might cause content not to display */
+  [data-aos] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
   }
 }
