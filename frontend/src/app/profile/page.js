@@ -149,7 +149,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto pt-6 px-4">
+    <div className="max-w-4xl mx-auto pt-6 px-4 bg-white dark:bg-gray-900">
       {/* Profile Header */}
       <div className="flex flex-col md:flex-row items-center md:items-start mb-8">
         {/* Profile Picture */}
@@ -172,7 +172,7 @@ export default function Profile() {
         {/* Profile Info */}
         <div className="flex-1 text-center md:text-left">
           <div className="flex flex-col md:flex-row md:items-center mb-4">
-            <h1 className="text-2xl font-bold mb-1 md:mb-0 md:mr-4">{user.username}</h1>
+            <h1 className="text-2xl font-bold mb-1 md:mb-0 md:mr-4 text-gray-900 dark:text-white">{user.username}</h1>
             
             {/* Edit Profile Button */}
             <button 

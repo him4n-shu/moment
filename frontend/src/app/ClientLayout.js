@@ -147,19 +147,19 @@ function LayoutWithSocket({ children, isAuthPage }) {
         <MobileNavbar user={user} toggleMenu={toggleMobileMenu} isOpen={mobileMenuOpen} />
       </div>
       
-      <div className="flex-1 md:ml-16 min-h-screen transition-colors duration-300 mt-14 md:mt-0" style={{ backgroundColor: 'var(--background)' }}>
+      <div className="flex-1 md:ml-16 min-h-screen transition-colors duration-300 mt-14 md:mt-0 bg-white dark:bg-gray-900" style={{ backgroundColor: 'var(--background)' }}>
         {/* Desktop Navbar */}
         <div className="hidden md:block sticky-element top-0 z-10">
           <Navbar />
         </div>
         
-        <main className="container mx-auto px-3 sm:px-4 lg:px-6 pb-24 md:pb-6">
+        <main className="container mx-auto px-0 pb-24 md:pb-6">
           {isLoading ? (
             <div className="flex justify-center items-center min-h-[50vh]">
               <div className="w-12 h-12 rounded-full border-4 border-t-[#FF6B6B] border-r-[#FF8E53] border-b-[#FFD166] border-l-transparent animate-spin"></div>
             </div>
           ) : (
-            <div className="pt-2 md:pt-4">
+            <div className="pt-0 md:pt-4">
               {children}
             </div>
           )}
@@ -182,7 +182,7 @@ export default function ClientLayout({ children }) {
       mirror: true,
       offset: 50,
       easing: 'ease-in-out',
-      disable: window.innerWidth < 640 // Disable animations on mobile for better performance
+      disable: window.innerWidth < 640 
     });
   }, []);
 

@@ -25,7 +25,7 @@ export default function Feed() {
     
     // Auto-refresh the feed every 30 seconds
     const interval = setInterval(() => {
-      fetchFeed(false); // Silent refresh (no loading indicator)
+      fetchFeed(false); 
     }, 30000);
     
     return () => clearInterval(interval);
@@ -336,9 +336,9 @@ export default function Feed() {
   }
 
   return (
-    <div className="max-w-xl mx-auto py-6 px-4 sm:px-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-brand-red" data-aos="fade-right">Your Feed</h1>
+    <div className="w-full mx-0 py-4 px-0 bg-white dark:bg-gray-900">
+      <div className="flex justify-between items-center mb-4 px-4">
+        <h1 className="text-2xl font-bold text-brand-red" data-aos="fade-right">Explore Latest Posts</h1>
         <button 
           onClick={handleManualRefresh} 
           className="flex items-center text-sm text-gray-600 hover:text-brand-orange dark:text-gray-400 dark:hover:text-brand-yellow"
@@ -350,12 +350,12 @@ export default function Feed() {
         </button>
       </div>
       
-      <div className="text-sm text-gray-500 mb-6" data-aos="fade-up">
+      <div className="text-sm text-gray-500 mb-4 px-4" data-aos="fade-up">
         Last updated: {formatLastRefresh()}
       </div>
       
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 p-4 rounded-md mb-6" data-aos="fade-in">
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 p-4 rounded-md mb-4 mx-4" data-aos="fade-in">
           <p className="text-red-600 dark:text-red-400">{error}</p>
         </div>
       )}
@@ -365,7 +365,7 @@ export default function Feed() {
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-red"></div>
         </div>
       ) : posts.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-md" data-aos="fade-up">
+        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-md mx-4" data-aos="fade-up">
           <h2 className="text-xl font-semibold mb-2">No posts yet</h2>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             Your feed is empty. Follow some users to see their posts here.
@@ -378,11 +378,11 @@ export default function Feed() {
           </Link>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-2">
           {posts.map((post, index) => (
             <div 
               key={post._id} 
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300"
+              className="bg-white dark:bg-gray-800 rounded-none shadow-sm border-t border-b border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300 w-full"
               data-aos="fade-up"
               data-aos-delay={index * 100}
               data-aos-anchor-placement="top-bottom"
@@ -400,7 +400,7 @@ export default function Feed() {
                       />
                     </div>
                     <div>
-                      <div className="font-medium">{post.user.username}</div>
+                      <div className="font-medium text-sm sm:text-base">{post.user.username}</div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">
                         {formatDate(post.createdAt)}
                       </div>
@@ -414,12 +414,13 @@ export default function Feed() {
                 <p className="mb-3 text-sm">{post.caption}</p>
                 
                 {(post.imageUrl || post.imageData || post.image) && (
-                  <div className="mb-4 post-image-container" data-aos="zoom-in" data-aos-delay={(index * 100) + 100}>
+                  <div className="mb-4 -mx-3 p-0" data-aos="zoom-in" data-aos-delay={(index * 100) + 100}>
                     <OptimizedImage
                       src={post.imageData || post.imageUrl || post.image}
                       alt={`${post.user.username}'s post`}
                       width={400}
                       height={400}
+                      className="w-full"
                     />
                   </div>
                 )}
